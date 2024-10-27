@@ -12,10 +12,6 @@ var rootCmd = &cobra.Command{
 	Short: fmt.Sprintf("%s is a CLI tool for identifying whether an IP address belongs to a major cloud provider (e.g., AWS, GCP).", internal.AppName),
 	Args:  cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("인수 목록:")
-		for i, arg := range args {
-			fmt.Printf("  인수 %d: %s\n", i+1, arg)
-		}
 		result := ip.CheckIp(&args)
 		for _, r := range result {
 			fmt.Println(r)
