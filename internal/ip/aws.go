@@ -2,6 +2,7 @@ package ip
 
 import (
 	"cloudip/internal"
+	"cloudip/internal/ip/aws"
 	"fmt"
 	"io"
 	"net"
@@ -9,12 +10,6 @@ import (
 	"os"
 	"time"
 )
-
-const awsDataFile = "aws.json"
-const metadataFile = ".metadata.json"
-const awsDataUrl = "https://ip-ranges.amazonaws.com/ip-ranges.json"
-
-var awsDataFilePath = fmt.Sprintf("%s/%s", getAwsDataDir(), awsDataFile)
 
 var v4Tree *CIDRTree
 var v6Tree *CIDRTree
@@ -77,7 +72,7 @@ func IsAwsIp(ip string) (bool, error) {
 }
 
 func ensureAwsIpFile() {
-	metadataFilePath := fmt.Sprintf("%s/%s", getAwsDataDir(), metadataFile)
+	metadataFilePath := fmt.Sprintf("%s/%s", getAwsDataDir(), aws.MetadataFile)
 	if !internal.IsFileExists(metadataFilePath) {
 		// Create metadata file
 		metadataFile, err := os.OpenFile(metadataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
@@ -98,7 +93,7 @@ func ensureAwsIpFile() {
 			}
 		}()
 	}
-	if !internal.IsFileExists(awsDataFilePath) {
+	if !internal.IsFileExists(aws.DataFilePath) {
 		// Download the AWS IP ranges file
 		downloadData()
 	} else if isExpired() {
@@ -119,7 +114,7 @@ func getAwsDataDir() string {
 }
 
 func downloadData() {
-	resp, err := http.Get(awsDataUrl)
+	resp, err := http.Get(aws.DataUrl)
 	if err != nil {
 		fmt.Println("Error downloading file:", err)
 		return
@@ -137,7 +132,7 @@ func downloadData() {
 	}
 
 	// 파일 생성
-	file, err := os.Create(awsDataFilePath)
+	file, err := os.Create(aws.DataFilePath)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return
@@ -162,8 +157,7 @@ func downloadData() {
 	}
 
 	var metadataFile *os.File
-	metadataFilePath := fmt.Sprintf("%s/%s", getAwsDataDir(), metadataFile)
-	metadataFile, err = os.OpenFile(metadataFilePath, os.O_CREATE|os.O_RDWR, 0644)
+	metadataFile, err = os.OpenFile(aws.MetadataFilePath, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		fmt.Println("Error opening metadata file:", err)
 		return
@@ -180,7 +174,6 @@ func downloadData() {
 		fmt.Println("Error getting metadata:", err)
 		return
 	}
-	fmt.Println("test: ", storedMetadata)
 
 	if storedMetadata.LastModified != currentLastModified.Unix() {
 		metadata := AwsDataMetadata{
@@ -194,21 +187,20 @@ func downloadData() {
 }
 
 func isExpired() bool {
-	metadataFilePath := fmt.Sprintf("%s/%s", getAwsDataDir(), metadataFile)
-	metadataFile, err := os.Open(metadataFilePath)
+	metadataFile, err := os.Open(aws.MetadataFilePath)
 	if err != nil {
-		fmt.Println("Error opening metadataFile:", err)
+		fmt.Println("Error opening MetadataFile:", err)
 		return true
 	}
 	defer func() {
 		if fileCloseErr := metadataFile.Close(); fileCloseErr != nil {
-			fmt.Println("Error closing metadataFile:", fileCloseErr)
+			fmt.Println("Error closing MetadataFile:", fileCloseErr)
 		}
 	}()
 
-	resp, err := http.Head(awsDataUrl)
+	resp, err := http.Head(aws.DataUrl)
 	if err != nil {
-		fmt.Println("Error checking metadataFile expiration:", err)
+		fmt.Println("Error checking MetadataFile expiration:", err)
 		return false
 	}
 	defer func() {
@@ -258,7 +250,7 @@ func writeMetadata[T any](metadataFile *os.File, metadata *T) error {
 }
 
 func getAwsData(data *AwsIpRangeData) error {
-	file, err := os.Open(awsDataFilePath)
+	file, err := os.Open(aws.DataFilePath)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return err
