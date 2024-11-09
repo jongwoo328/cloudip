@@ -2,6 +2,7 @@ package aws
 
 import (
 	"cloudip/internal"
+	"cloudip/internal/util"
 	"fmt"
 	"io"
 	"net/http"
@@ -68,7 +69,7 @@ func (AwsMetadataManager *MetadataManager) ReadMetadata() error {
 		}
 	}()
 
-	err = internal.HandleJSON(metadataFile, AwsMetadataManager.Metadata, "read")
+	err = util.HandleJSON(metadataFile, AwsMetadataManager.Metadata, "read")
 	return err
 }
 
@@ -95,7 +96,7 @@ func (AwsMetadataManager *MetadataManager) WriteMetadata(metadata *internal.Clou
 		fmt.Println("Error seeking metadata file:", err)
 		return err
 	}
-	return internal.HandleJSON(metadataFile, metadata, "write")
+	return util.HandleJSON(metadataFile, metadata, "write")
 }
 
 func (AwsMetadataManager *MetadataManager) IsExpired() bool {

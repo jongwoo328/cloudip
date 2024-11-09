@@ -3,6 +3,7 @@ package ip
 import (
 	"cloudip/internal"
 	"cloudip/internal/ip/aws"
+	"cloudip/internal/util"
 	"fmt"
 	"io"
 	"net"
@@ -239,14 +240,14 @@ func getMetadata[T any](metadataFile *os.File, metadata *T) error {
 	if err != nil {
 		return err
 	}
-	return internal.HandleJSON(metadataFile, metadata, "read")
+	return util.HandleJSON(metadataFile, metadata, "read")
 }
 
 func writeMetadata[T any](metadataFile *os.File, metadata *T) error {
 	if _, err := metadataFile.Seek(0, io.SeekStart); err != nil {
 		return fmt.Errorf("failed to seek the file: %v", err)
 	}
-	return internal.HandleJSON(metadataFile, metadata, "write")
+	return util.HandleJSON(metadataFile, metadata, "write")
 }
 
 func getAwsData(data *AwsIpRangeData) error {
@@ -261,7 +262,7 @@ func getAwsData(data *AwsIpRangeData) error {
 		}
 	}()
 
-	err = internal.HandleJSON(file, data, "read")
+	err = util.HandleJSON(file, data, "read")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return err
