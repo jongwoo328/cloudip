@@ -32,23 +32,17 @@ func EnsureAppDir() {
 	// Create the application directory if it doesn't exist
 	appDir, err := getAppDir()
 	if err != nil {
-		fmt.Println(err)
+		PrintErrorTrace(err)
 		os.Exit(1)
 	}
-	if _, err := os.Stat(appDir); os.IsNotExist(err) {
-		err := os.MkdirAll(appDir, 0755)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	}
+	ensureDir(appDir)
 }
 
-func EnsureDir(path string) {
+func ensureDir(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		err := os.MkdirAll(path, 0755)
 		if err != nil {
-			fmt.Println(err)
+			PrintErrorTrace(err)
 			os.Exit(1)
 		}
 	}

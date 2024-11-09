@@ -35,12 +35,11 @@ func (AwsMetadataManager *MetadataManager) EnsureDataFile() error {
 	if !util.IsFileExists(AwsMetadataManager.MetadataFilePath) {
 		metadataFile, err := os.Create(AwsMetadataManager.MetadataFilePath)
 		if err != nil {
-			fmt.Println("Error creating metadata file:", err)
-			return fmt.Errorf("Error creating metadata file: %v", err)
+			return util.ErrorWithInfo(err, "Error creating metadata file")
 		}
 		defer func() {
 			if err := metadataFile.Close(); err != nil {
-				fmt.Println("Error closing metadata file:", err)
+				util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing metadata file"))
 			}
 		}()
 		err = AwsMetadataManager.WriteMetadata(&internal.CloudMetadata{
@@ -48,7 +47,7 @@ func (AwsMetadataManager *MetadataManager) EnsureDataFile() error {
 			LastModified: 0,
 		})
 		if err != nil {
-			return fmt.Errorf("Error writing metadata: %v", err)
+			return util.ErrorWithInfo(err, "Error writing metadata")
 		}
 	}
 
@@ -61,17 +60,17 @@ func (AwsMetadataManager *MetadataManager) EnsureDataFile() error {
 func (AwsMetadataManager *MetadataManager) ReadMetadata() error {
 	metadataFile, err := os.Open(AwsMetadataManager.MetadataFilePath)
 	if err != nil {
-		fmt.Println("Error opening metadata file:", err)
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error opening metadata file"))
 		return err
 	}
 	defer func() {
 		if err := metadataFile.Close(); err != nil {
-			fmt.Println("Error closing metadata file:", err)
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing metadata file"))
 		}
 	}()
 	err = util.HandleJSON(metadataFile, AwsMetadataManager.Metadata, "read")
 	if err != nil {
-		fmt.Println("Error reading metadata file:", err)
+		err = util.ErrorWithInfo(err, "Error reading metadata file")
 		return err
 	}
 	return nil
@@ -88,17 +87,15 @@ func (AwsMetadataManager *MetadataManager) GetMetadata() (*internal.CloudMetadat
 func (AwsMetadataManager *MetadataManager) WriteMetadata(metadata *internal.CloudMetadata) error {
 	metadataFile, err := os.OpenFile(AwsMetadataManager.MetadataFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		fmt.Println("Error opening metadata file:", err)
-		return err
+		return util.ErrorWithInfo(err, "Error opening metadata file")
 	}
 	defer func() {
 		if err := metadataFile.Close(); err != nil {
-			fmt.Println("Error closing metadata file:", err)
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing metadata file"))
 		}
 	}()
 	if _, err := metadataFile.Seek(0, io.SeekStart); err != nil {
-		fmt.Println("Error seeking metadata file:", err)
-		return err
+		return util.ErrorWithInfo(err, "Error seeking metadata file")
 	}
 	return util.HandleJSON(metadataFile, metadata, "write")
 }
@@ -111,24 +108,24 @@ func (AwsMetadataManager *MetadataManager) IsExpired() bool {
 
 	resp, err := http.Head(AwsMetadataManager.DataURI)
 	if err != nil {
-		fmt.Println("Error checking metadata file expiration:", err)
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error checking metadata file expiration"))
 		return false
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Println("Error closing response body:", err)
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing response body"))
 		}
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Error: Received non-200 status code:", resp.Status)
+		util.PrintErrorTrace(util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error checking metadata file expiration"))
 		return false
 	}
 
 	lastModified := resp.Header.Get("Last-Modified")
 	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
 	if err != nil {
-		fmt.Println("Error parsing Date header:", err)
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error parsing Date header"))
 		return false
 	}
 	return lastModifiedDate.Unix() != AwsMetadataManager.Metadata.LastModified
@@ -137,35 +134,35 @@ func (AwsMetadataManager *MetadataManager) IsExpired() bool {
 func (AwsMetadataManager *MetadataManager) DownloadData() {
 	resp, err := http.Get(AwsMetadataManager.DataURI)
 	if err != nil {
-		fmt.Println("Error downloading dataFile:", err)
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error downloading dataFile"))
 		return
 	}
 	// 응답 상태 코드 확인
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Error: Received non-200 status code:", resp.Status)
+		util.PrintErrorTrace(util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error downloading dataFile"))
 		return
 	}
 
 	dataFile, err := os.OpenFile(AwsMetadataManager.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
-		fmt.Println("Error opening dataFile:", err)
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error opening dataFile"))
 		return
 	}
 
 	_, err = io.Copy(dataFile, resp.Body)
 	if err != nil {
-		fmt.Println("Error saving dataFile:", err)
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error saving dataFile"))
 		return
 	}
 
 	currentLastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
 	if err != nil {
-		fmt.Println("Error parsing Date header:", err)
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error parsing Date header"))
 		return
 	}
 	err = AwsMetadataManager.ReadMetadata()
 	if err != nil {
-		fmt.Println("Error reading metadata !:", err)
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error reading metadata"))
 		return
 	}
 
@@ -175,17 +172,17 @@ func (AwsMetadataManager *MetadataManager) DownloadData() {
 			LastModified: currentLastModified.Unix(),
 		}
 		if err := AwsMetadataManager.WriteMetadata(&metadata); err != nil {
-			fmt.Println("Error writing metadata:", err)
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error writing metadata"))
 			return
 		}
 	}
 
 	defer func() {
 		if networkCloseErr := resp.Body.Close(); networkCloseErr != nil {
-			fmt.Println("Error closing response body:", networkCloseErr)
+			util.PrintErrorTrace(util.ErrorWithInfo(networkCloseErr, "Error closing response body"))
 		}
 		if fileCloseErr := dataFile.Close(); fileCloseErr != nil {
-			fmt.Println("Error closing dataFile:", fileCloseErr)
+			util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "Error closing dataFile"))
 		}
 	}()
 

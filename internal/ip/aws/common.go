@@ -39,12 +39,12 @@ func EnsureAwsIpFile() {
 	if !util.IsFileExists(MetadataFilePath) {
 		// Create metadata file
 		if err := os.MkdirAll(ProviderDirectory, 0755); err != nil {
-			fmt.Println("Error creating directory:", err)
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "error creating provider directory"))
 			return
 		}
 		metadataFile, err := os.OpenFile(MetadataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 		if err != nil {
-			fmt.Println("Error creating metadata file:", err)
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "error creating metadata file"))
 			return
 		}
 
@@ -54,12 +54,12 @@ func EnsureAwsIpFile() {
 		})
 
 		if err != nil {
-			fmt.Println("Error writing metadata:", err)
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "error writing metadata"))
 			return
 		}
 		defer func() {
 			if fileCloseErr := metadataFile.Close(); fileCloseErr != nil {
-				fmt.Println("Error closing metadata file:", fileCloseErr)
+				util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "error closing metadata file"))
 			}
 		}()
 	}
