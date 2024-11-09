@@ -17,20 +17,22 @@ type MetadataManager struct {
 	DataURI          string
 }
 
-func NewAwsMetadataManager() *MetadataManager {
-	manager := MetadataManager{
-		DataFilePath:     DataFilePath,
-		MetadataFilePath: MetadataFilePath,
-		Metadata: &internal.CloudMetadata{
-			Type: internal.AWS,
-		},
-		DataURI: DataUrl,
-	}
-	return &manager
+var metadataManager = &MetadataManager{
+	DataFilePath:     DataFilePath,
+	MetadataFilePath: MetadataFilePath,
+	Metadata: &internal.CloudMetadata{
+		Type:         internal.AWS,
+		LastModified: 0,
+	},
+	DataURI: DataUrl,
+}
+
+func GetMetadataManager() *MetadataManager {
+	return metadataManager
 }
 
 func (AwsMetadataManager *MetadataManager) EnsureDataFile() error {
-	if !internal.IsFileExists(AwsMetadataManager.MetadataFilePath) {
+	if !util.IsFileExists(AwsMetadataManager.MetadataFilePath) {
 		metadataFile, err := os.Create(AwsMetadataManager.MetadataFilePath)
 		if err != nil {
 			fmt.Println("Error creating metadata file:", err)
@@ -46,12 +48,11 @@ func (AwsMetadataManager *MetadataManager) EnsureDataFile() error {
 			LastModified: 0,
 		})
 		if err != nil {
-			fmt.Println("Error writing metadata:", err)
 			return fmt.Errorf("Error writing metadata: %v", err)
 		}
 	}
 
-	if !internal.IsFileExists(AwsMetadataManager.DataFilePath) {
+	if !util.IsFileExists(AwsMetadataManager.DataFilePath) {
 
 	}
 	return nil
@@ -68,9 +69,12 @@ func (AwsMetadataManager *MetadataManager) ReadMetadata() error {
 			fmt.Println("Error closing metadata file:", err)
 		}
 	}()
-
 	err = util.HandleJSON(metadataFile, AwsMetadataManager.Metadata, "read")
-	return err
+	if err != nil {
+		fmt.Println("Error reading metadata file:", err)
+		return err
+	}
+	return nil
 }
 
 func (AwsMetadataManager *MetadataManager) GetMetadata() (*internal.CloudMetadata, error) {
@@ -82,7 +86,7 @@ func (AwsMetadataManager *MetadataManager) GetMetadata() (*internal.CloudMetadat
 }
 
 func (AwsMetadataManager *MetadataManager) WriteMetadata(metadata *internal.CloudMetadata) error {
-	metadataFile, err := os.Open(AwsMetadataManager.MetadataFilePath)
+	metadataFile, err := os.OpenFile(AwsMetadataManager.MetadataFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println("Error opening metadata file:", err)
 		return err
@@ -130,7 +134,7 @@ func (AwsMetadataManager *MetadataManager) IsExpired() bool {
 	return lastModifiedDate.Unix() != AwsMetadataManager.Metadata.LastModified
 }
 
-func (AwsMetadataManager *MetadataManager) downloadData() {
+func (AwsMetadataManager *MetadataManager) DownloadData() {
 	resp, err := http.Get(AwsMetadataManager.DataURI)
 	if err != nil {
 		fmt.Println("Error downloading dataFile:", err)
@@ -142,7 +146,7 @@ func (AwsMetadataManager *MetadataManager) downloadData() {
 		return
 	}
 
-	dataFile, err := os.Open(AwsMetadataManager.DataFilePath)
+	dataFile, err := os.OpenFile(AwsMetadataManager.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println("Error opening dataFile:", err)
 		return
@@ -161,7 +165,7 @@ func (AwsMetadataManager *MetadataManager) downloadData() {
 	}
 	err = AwsMetadataManager.ReadMetadata()
 	if err != nil {
-		fmt.Println("Error reading metadata:", err)
+		fmt.Println("Error reading metadata !:", err)
 		return
 	}
 

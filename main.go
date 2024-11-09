@@ -2,13 +2,13 @@ package main
 
 import (
 	"cloudip/cmd"
-	"cloudip/internal"
+	"cloudip/internal/util"
 	"fmt"
 	"os"
 )
 
 func main() {
-	internal.EnsureAppDir()
+	util.EnsureAppDir()
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)

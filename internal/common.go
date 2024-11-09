@@ -2,7 +2,14 @@ package internal
 
 const AppName = "cloudip"
 
-type CloudProvider string
+type CheckIpResult struct {
+	Ip     string
+	Result Result
+}
+
+type Result struct {
+	Aws bool
+}
 
 const (
 	AWS   CloudProvider = "aws"
@@ -10,14 +17,9 @@ const (
 	Azure CloudProvider = "azure"
 )
 
+type CloudProvider string
+
 type CloudMetadata struct {
 	Type         CloudProvider `json:"type"`
 	LastModified int64         `json:"lastModified"`
-}
-
-type MetadataManager interface {
-	EnsureDataFile() error // 데이터 파일이 없거나 오래된 경우 처리
-	GetMetadata() (*CloudMetadata, error)
-	WriteMetadata(metadata *CloudMetadata) error
-	IsExpired() bool
 }

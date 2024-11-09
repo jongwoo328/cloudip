@@ -1,6 +1,7 @@
-package internal
+package util
 
 import (
+	"cloudip/internal"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,9 +16,9 @@ func getAppDir() (string, error) {
 
 	switch runtime.GOOS {
 	case "darwin":
-		return filepath.Join(home, "Library", "Application Support", AppName), nil
+		return filepath.Join(home, "Library", "Application Support", internal.AppName), nil
 	case "linux":
-		return filepath.Join(home, "."+AppName), nil
+		return filepath.Join(home, "."+internal.AppName), nil
 	default:
 		return "", fmt.Errorf("unsupported platform")
 	}
