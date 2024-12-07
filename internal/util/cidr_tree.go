@@ -23,6 +23,7 @@ func NewCIDRTree() *CIDRTree {
 func (tree *CIDRTree) AddCIDR(cidr string) {
 	_, ipNet, err := net.ParseCIDR(cidr)
 	if err != nil {
+		fmt.Printf("Invalid CIDR: %s, error: %v\n", cidr, err)
 		return // Invalid CIDR
 	}
 
@@ -81,7 +82,7 @@ func ipToBinary(ip net.IP, maskSize int) []byte {
 	for _, octet := range ip {
 		for i := 7; i >= 0 && len(binary) < maskSize; i-- {
 			bit := (octet >> i) & 1
-			binary = append(binary, '0'+byte(bit))
+			binary = append(binary, bit)
 		}
 	}
 	return binary
