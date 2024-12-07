@@ -59,7 +59,7 @@ Output:
 54.230.176.25,aws
 ```
 
-#### Tab (	) Delimited
+#### Tab (\t) Delimited
 ```zsh
 cloudip 54.230.176.25 --delimiter $'\t'
 ```
