@@ -1,5 +1,5 @@
 APP_NAME := cloudip
-PLATFORMS := linux/386 linux/amd64 darwin/amd64 darwin/arm64
+PLATFORMS := linux/386 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
 BUILD_DIR := build
 VERSION := 0.1.0
 
