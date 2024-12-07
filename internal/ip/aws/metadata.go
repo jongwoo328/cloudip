@@ -3,36 +3,32 @@ package aws
 import (
 	"cloudip/internal"
 	"cloudip/internal/util"
-	"fmt"
 	"io"
-	"net/http"
 	"os"
-	"time"
 )
 
 type MetadataManager struct {
-	DataFilePath     string
 	MetadataFilePath string
 	Metadata         *internal.CloudMetadata
-	DataURI          string
 }
 
 var metadataManager = &MetadataManager{
-	DataFilePath:     DataFilePath,
 	MetadataFilePath: MetadataFilePath,
 	Metadata: &internal.CloudMetadata{
 		Type:         internal.AWS,
 		LastModified: 0,
 	},
-	DataURI: DataUrl,
 }
 
 func GetMetadataManager() *MetadataManager {
 	return metadataManager
 }
 
-func (AwsMetadataManager *MetadataManager) EnsureDataFile() error {
+func (AwsMetadataManager *MetadataManager) EnsureMetadataFile() error {
 	if !util.IsFileExists(AwsMetadataManager.MetadataFilePath) {
+		if err := os.MkdirAll(ProviderDirectory, 0755); err != nil {
+			return util.ErrorWithInfo(err, "Error creating aws directory")
+		}
 		metadataFile, err := os.Create(AwsMetadataManager.MetadataFilePath)
 		if err != nil {
 			return util.ErrorWithInfo(err, "Error creating metadata file")
@@ -51,9 +47,6 @@ func (AwsMetadataManager *MetadataManager) EnsureDataFile() error {
 		}
 	}
 
-	if !util.IsFileExists(AwsMetadataManager.DataFilePath) {
-
-	}
 	return nil
 }
 
@@ -101,89 +94,11 @@ func (AwsMetadataManager *MetadataManager) WriteMetadata(metadata *internal.Clou
 }
 
 func (AwsMetadataManager *MetadataManager) IsExpired() bool {
-	err := AwsMetadataManager.ReadMetadata()
+	ipDataManagerAws := GetIpDataManagerAws()
+	lastModifiedDate, err := ipDataManagerAws.GetLastModifiedUpstream()
 	if err != nil {
-		return true
-	}
-
-	resp, err := http.Head(AwsMetadataManager.DataURI)
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error checking metadata file expiration"))
-		return false
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing response body"))
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		util.PrintErrorTrace(util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error checking metadata file expiration"))
-		return false
-	}
-
-	lastModified := resp.Header.Get("Last-Modified")
-	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error parsing Date header"))
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error getting last modified date"))
 		return false
 	}
 	return lastModifiedDate.Unix() != AwsMetadataManager.Metadata.LastModified
-}
-
-func (AwsMetadataManager *MetadataManager) DownloadData() {
-	resp, err := http.Get(AwsMetadataManager.DataURI)
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error downloading dataFile"))
-		return
-	}
-	// 응답 상태 코드 확인
-	if resp.StatusCode != http.StatusOK {
-		util.PrintErrorTrace(util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error downloading dataFile"))
-		return
-	}
-
-	dataFile, err := os.OpenFile(AwsMetadataManager.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error opening dataFile"))
-		return
-	}
-
-	_, err = io.Copy(dataFile, resp.Body)
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error saving dataFile"))
-		return
-	}
-
-	currentLastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error parsing Date header"))
-		return
-	}
-	err = AwsMetadataManager.ReadMetadata()
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error reading metadata"))
-		return
-	}
-
-	if AwsMetadataManager.Metadata.LastModified != currentLastModified.Unix() {
-		metadata := internal.CloudMetadata{
-			Type:         internal.AWS,
-			LastModified: currentLastModified.Unix(),
-		}
-		if err := AwsMetadataManager.WriteMetadata(&metadata); err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error writing metadata"))
-			return
-		}
-	}
-
-	defer func() {
-		if networkCloseErr := resp.Body.Close(); networkCloseErr != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(networkCloseErr, "Error closing response body"))
-		}
-		if fileCloseErr := dataFile.Close(); fileCloseErr != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "Error closing dataFile"))
-		}
-	}()
-
 }

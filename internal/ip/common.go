@@ -7,7 +7,7 @@ var Providers = []internal.CloudProvider{
 }
 
 type MetadataManager interface {
-	EnsureDataFile() error // 데이터 파일이 없거나 오래된 경우 처리
+	EnsureMetadataFile() error // 데이터 파일이 없거나 오래된 경우 처리
 	GetMetadata() (*internal.CloudMetadata, error)
 	WriteMetadata(metadata *internal.CloudMetadata) error
 	IsExpired() bool

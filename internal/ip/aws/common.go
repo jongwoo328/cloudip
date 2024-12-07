@@ -1,10 +1,8 @@
 package aws
 
 import (
-	"cloudip/internal"
 	"cloudip/internal/util"
 	"fmt"
-	"os"
 )
 
 var appDir, _ = util.GetAppDir()
@@ -32,45 +30,4 @@ type IpRangeData struct {
 		Service            string `json:"service"`
 		NetworkBorderGroup string `json:"network_border_group"`
 	} `json:"ipv6_prefixes"`
-}
-
-func EnsureAwsIpFile() {
-	metadataManager := GetMetadataManager()
-	if !util.IsFileExists(MetadataFilePath) {
-		// Create metadata file
-		if err := os.MkdirAll(ProviderDirectory, 0755); err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "error creating provider directory"))
-			return
-		}
-		metadataFile, err := os.OpenFile(MetadataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-		if err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "error creating metadata file"))
-			return
-		}
-
-		err = metadataManager.WriteMetadata(&internal.CloudMetadata{
-			Type:         internal.AWS,
-			LastModified: 0,
-		})
-
-		if err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "error writing metadata"))
-			return
-		}
-		defer func() {
-			if fileCloseErr := metadataFile.Close(); fileCloseErr != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "error closing metadata file"))
-			}
-		}()
-	}
-	if !util.IsFileExists(DataFilePath) {
-		// Download the AWS IP ranges file
-		metadataManager.DownloadData()
-		return
-	}
-	if metadataManager.IsExpired() {
-		// update the file
-		metadataManager.DownloadData()
-	}
-
 }

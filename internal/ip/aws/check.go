@@ -13,7 +13,20 @@ func init() {
 	v4Tree = util.NewCIDRTree()
 	v6Tree = util.NewCIDRTree()
 
-	EnsureAwsIpFile()
+	metadataManager := GetMetadataManager()
+	err := metadataManager.EnsureMetadataFile()
+	if err != nil {
+		util.PrintErrorTrace(err)
+		return
+	}
+
+	ipDataManagerAws := GetIpDataManagerAws()
+	err = ipDataManagerAws.EnsureDataFile()
+	if err != nil {
+		util.PrintErrorTrace(err)
+		return
+	}
+
 	awsIpRangeData := IpRangeData{}
 
 	for _, prefix := range awsIpRangeData.Prefixes {
@@ -38,4 +51,8 @@ func IsAwsIp(ip string) (bool, error) {
 		return v6Tree.Match(ip), nil
 	}
 	return false, nil
+}
+
+func loadIpData() {
+
 }

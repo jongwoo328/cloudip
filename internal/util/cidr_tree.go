@@ -54,7 +54,6 @@ func (tree *CIDRTree) Match(ip string) bool {
 	node := tree
 	for i := 0; i < len(binaryIP); i++ {
 		if node.IsLeaf {
-			fmt.Println("Matched CIDR:", node.CIDR)
 			return true
 		}
 		bit := binaryIP[i]
@@ -64,7 +63,6 @@ func (tree *CIDRTree) Match(ip string) bool {
 		}
 	}
 
-	fmt.Println("Matched CIDR:", node.CIDR)
 	return node.IsLeaf
 }
 
