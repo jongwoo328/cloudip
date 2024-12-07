@@ -8,7 +8,6 @@
 
 This project is currently under development and supports **AWS only**. Additional cloud providers will be supported in future updates.
 
----
 
 ## Features
 - **Single IP Check**: Identify which cloud provider owns a specific IP.
@@ -16,7 +15,6 @@ This project is currently under development and supports **AWS only**. Additiona
 - **IPv4 and IPv6 Support**: Supports both IPv4 and IPv6 addresses.
 - **Table Format Output**: Display results in a formatted table with the `--pretty` option.
 
----
 
 ## Installation
 ### Binary Download
@@ -29,7 +27,6 @@ Download the latest binary from the Releases page.
 - macOS (x86_64)
 - macOS (ARM64)
 
----
 
 ## Usage
 ### Single IP Check
