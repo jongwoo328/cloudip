@@ -12,15 +12,20 @@ import (
 type CloudIpArgs struct {
 	pretty    bool
 	delimiter string
+	version   bool
 }
 
 var Args = CloudIpArgs{}
+var Version string
 
 var rootCmd = &cobra.Command{
 	Use:   internal.AppName,
 	Short: fmt.Sprintf("%s is a CLI tool for identifying whether an IP address belongs to a major cloud provider (e.g., AWS, GCP).", internal.AppName),
-	Args:  cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		if Args.version {
+			fmt.Println(Version)
+			return
+		}
 		result := ip.CheckIp(&args)
 		printResult(&result)
 	},
@@ -33,6 +38,7 @@ func Execute() error {
 func init() {
 	rootCmd.Flags().BoolVar(&Args.pretty, "pretty", false, "Pretty print the output")
 	rootCmd.Flags().StringVar(&Args.delimiter, "delimiter", " ", "Delimiter for the output")
+	rootCmd.Flags().BoolVarP(&Args.version, "version", "v", false, "Print the version")
 }
 
 func getProviderFromResult(result internal.Result) string {

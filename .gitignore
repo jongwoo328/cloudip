@@ -116,4 +116,4 @@ fabric.properties
 
 .idea/
 
-bin/
+build/
