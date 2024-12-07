@@ -5,6 +5,7 @@ import (
 	"cloudip/internal/util"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -14,6 +15,31 @@ type IpDataManagerAws struct {
 	DataURI      string
 	DataFile     string
 	DataFilePath string
+	IpRange      IpRangeData
+}
+
+type IpRangeData struct {
+	SyncToken  string `json:"syncToken"`
+	CreateDate string `json:"createDate"`
+	Prefixes   []struct {
+		IpPrefix           string `json:"ip_prefix"`
+		Region             string `json:"region"`
+		Service            string `json:"service"`
+		NetworkBorderGroup string `json:"network_border_group"`
+	} `json:"prefixes"`
+	Ipv6Prefixes []struct {
+		Ipv6Prefix         string `json:"ipv6_prefix"`
+		Region             string `json:"region"`
+		Service            string `json:"service"`
+		NetworkBorderGroup string `json:"network_border_group"`
+	} `json:"ipv6_prefixes"`
+}
+
+func (ipRange IpRangeData) IsEmpty() bool {
+	return ipRange.SyncToken == "" &&
+		ipRange.CreateDate == "" &&
+		len(ipRange.Prefixes) == 0 &&
+		len(ipRange.Ipv6Prefixes) == 0
 }
 
 func (IpDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, error) {
@@ -148,10 +174,34 @@ func (IpDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 	return nil
 }
 
+func (IpDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeData {
+	if !IpDataManagerAws.IpRange.IsEmpty() {
+		return &IpDataManagerAws.IpRange
+	}
+
+	awsIpRangeData := IpRangeData{}
+	ipDataFile, err := os.Open(IpDataManagerAws.DataFilePath)
+	if err != nil {
+		err = util.ErrorWithInfo(err, "Error opening data file")
+		util.PrintErrorTrace(err)
+		log.Fatal(err)
+	}
+	err = util.HandleJSON(ipDataFile, &awsIpRangeData, "read")
+	if err != nil {
+		err = util.ErrorWithInfo(err, "Error reading data file")
+		util.PrintErrorTrace(err)
+		log.Fatal(err)
+	}
+
+	IpDataManagerAws.IpRange = awsIpRangeData
+	return &IpDataManagerAws.IpRange
+}
+
 var ipDataManagerAws = &IpDataManagerAws{
 	DataURI:      DataUrl,
 	DataFile:     DataFile,
 	DataFilePath: DataFilePath,
+	IpRange:      IpRangeData{},
 }
 
 func GetIpDataManagerAws() *IpDataManagerAws {

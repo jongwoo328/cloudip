@@ -27,7 +27,7 @@ func init() {
 		return
 	}
 
-	awsIpRangeData := IpRangeData{}
+	awsIpRangeData := *ipDataManagerAws.LoadIpData()
 
 	for _, prefix := range awsIpRangeData.Prefixes {
 		v4Tree.AddCIDR(prefix.IpPrefix)
@@ -51,8 +51,4 @@ func IsAwsIp(ip string) (bool, error) {
 		return v6Tree.Match(ip), nil
 	}
 	return false, nil
-}
-
-func loadIpData() {
-
 }
