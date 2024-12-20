@@ -9,6 +9,7 @@ type CheckIpResult struct {
 
 type Result struct {
 	Aws bool
+	Gcp bool
 }
 
 const (
@@ -22,4 +23,9 @@ type CloudProvider string
 type CloudMetadata struct {
 	Type         CloudProvider `json:"type"`
 	LastModified int64         `json:"lastModified"`
+}
+
+type MetadataManager struct {
+	MetadataFilePath string
+	Metadata         *CloudMetadata
 }

@@ -45,6 +45,9 @@ func getProviderFromResult(result internal.Result) string {
 	if result.Aws {
 		return "aws"
 	}
+	if result.Gcp {
+		return "gcp"
+	}
 	return "unknown"
 }
 
