@@ -3,6 +3,7 @@ package ip
 import (
 	"cloudip/internal"
 	"cloudip/internal/ip/aws"
+	"cloudip/internal/ip/gcp"
 )
 
 func CheckIp(ips *[]string) []internal.CheckIpResult {
@@ -25,6 +26,12 @@ func checkCloudIp(ip string) internal.Result {
 				continue
 			}
 			result.Aws = isAwsIp
+		} else if provider == internal.GCP {
+			isGcpIp, err := gcp.IsGcpIp(ip)
+			if err != nil {
+				continue
+			}
+			result.Gcp = isGcpIp
 		}
 	}
 	return result

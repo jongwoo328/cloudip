@@ -1,4 +1,4 @@
-package aws
+package gcp
 
 import (
 	"cloudip/internal"
@@ -10,7 +10,7 @@ import (
 var metadataManager = &internal.MetadataManager{
 	MetadataFilePath: MetadataFilePathAws,
 	Metadata: &internal.CloudMetadata{
-		Type:         internal.AWS,
+		Type:         internal.GCP,
 		LastModified: 0,
 	},
 }
@@ -18,7 +18,7 @@ var metadataManager = &internal.MetadataManager{
 func ensureMetadataFile() error {
 	if !util.IsFileExists(metadataManager.MetadataFilePath) {
 		if err := os.MkdirAll(ProviderDirectory, 0755); err != nil {
-			return util.ErrorWithInfo(err, "Error creating aws directory")
+			return util.ErrorWithInfo(err, "Error creating gcp directory")
 		}
 		metadataFile, err := os.Create(metadataManager.MetadataFilePath)
 		if err != nil {
@@ -30,7 +30,7 @@ func ensureMetadataFile() error {
 			}
 		}()
 		err = writeMetadata(&internal.CloudMetadata{
-			Type:         internal.AWS,
+			Type:         internal.GCP,
 			LastModified: 0,
 		})
 		if err != nil {
@@ -61,9 +61,9 @@ func readMetadata() error {
 }
 
 func writeMetadata(metadata *internal.CloudMetadata) error {
-	metadataFile, err := os.OpenFile(metadataManager.MetadataFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	metadataFile, err := os.Create(metadataManager.MetadataFilePath)
 	if err != nil {
-		return util.ErrorWithInfo(err, "Error opening metadata file")
+		return util.ErrorWithInfo(err, "Error creating metadata file")
 	}
 	defer func() {
 		if err := metadataFile.Close(); err != nil {
@@ -77,7 +77,7 @@ func writeMetadata(metadata *internal.CloudMetadata) error {
 }
 
 func isExpired() bool {
-	lastModifiedDate, err := ipDataManagerAws.GetLastModifiedUpstream()
+	lastModifiedDate, err := ipDataManagerGcp.GetLastModifiedUpstream()
 	if err != nil {
 		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error getting last modified date"))
 		return false
