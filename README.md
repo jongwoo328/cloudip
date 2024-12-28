@@ -13,7 +13,7 @@ This project is currently under development, and features and options may change
 - **Single IP Check**: Identify which cloud provider owns a specific IP.
 - **Multiple IP Check**: Check multiple IP addresses at once.
 - **IPv4 and IPv6 Support**: Supports both IPv4 and IPv6 addresses.
-- **Table Format Output**: Display results in a formatted table with the `--pretty` option.
+- **Format Output**: Display results in a formatted with the `--format` option.
 
 
 ## Installation
