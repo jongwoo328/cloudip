@@ -4,27 +4,20 @@ import (
 	"cloudip/internal"
 	"cloudip/internal/ip/aws"
 	"cloudip/internal/ip/gcp"
-	"sync"
 )
 
 func CheckIp(ips *[]string) []internal.CheckIpResult {
 	results := make([]internal.CheckIpResult, len(*ips))
-	var waitGroup sync.WaitGroup
 
 	for index, ip := range *ips {
-		waitGroup.Add(1)
-		go func(index int, ip string) {
-			defer waitGroup.Done()
-			checkResult, err := checkCloudIp(ip)
-			results[index] = internal.CheckIpResult{
-				Ip:     ip,
-				Result: checkResult,
-				Error:  err,
-			}
-		}(index, ip)
+		checkResult, err := checkCloudIp(ip)
+		results[index] = internal.CheckIpResult{
+			Ip:     ip,
+			Result: checkResult,
+			Error:  err,
+		}
 	}
 
-	waitGroup.Wait()
 	return results
 }
 
@@ -36,13 +29,20 @@ func checkCloudIp(ip string) (internal.Result, error) {
 			if err != nil {
 				return result, err
 			}
-			result.Aws = isAwsIp
-		} else if provider == internal.GCP {
+			if isAwsIp {
+				result.Aws = isAwsIp
+				return result, nil
+			}
+		}
+		if provider == internal.GCP {
 			isGcpIp, err := gcp.IsGcpIp(ip)
 			if err != nil {
 				return result, err
 			}
-			result.Gcp = isGcpIp
+			if isGcpIp {
+				result.Gcp = isGcpIp
+				return result, nil
+			}
 		}
 	}
 	return result, nil
