@@ -17,6 +17,13 @@
 
 
 ## 설치
+### Arch Linux
+[cloudip](https://aur.archlinux.org/packages/cloudip)은 AUR에서 패키지로 제공됩니다.
+AUR 도우미(e.g., `yay`)를 사용하여 설치할 수 있습니다:
+```shell
+yay -S cloudip
+```
+
 ### 바이너리 다운로드
 Release 페이지에서 최신 바이너리를 다운로드하세요.
 
