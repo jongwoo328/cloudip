@@ -1,7 +1,7 @@
 APP_NAME := cloudip
 PLATFORMS := linux/386 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
 BUILD_DIR := build
-VERSION := 0.2.0
+VERSION := 0.3.0
 
 build:
 	@for platform in $(PLATFORMS); do \
