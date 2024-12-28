@@ -17,6 +17,14 @@ This project is currently under development and supports **AWS and GCP**. Additi
 
 
 ## Installation
+### Arch Linux
+[cloudip](https://aur.archlinux.org/packages/cloudip) is available as a package on the AUR.
+You can install it using an AUR helper (e.g., `yay`):
+```zsh
+yay -S cloudip
+```
+
+
 ### Binary Download
 Download the latest binary from the Releases page.
 
