@@ -6,7 +6,7 @@
 
 **🚨 Warning 🚨**
 
-This project is currently under development and supports **AWS and GCP**. Additional cloud providers will be supported in future updates.
+This project is currently under development, and features and options may change without notice until the official release. The current version supports only AWS and GCP, with additional cloud providers planned for future updates.
 
 
 ## Features
