@@ -37,8 +37,17 @@ Download the latest binary from the Releases page.
 
 
 ## Usage
+### Version Check
+```shell
+cloudip -v
+```
+Output:
+```
+0.3.0
+```
+
 ### Single IP Check
-```zsh
+```shell
 cloudip 54.230.176.25
 ```
 Output:
@@ -47,7 +56,7 @@ Output:
 ```
 
 ### Multiple IP Check
-```zsh
+```shell
 cloudip 54.230.176.25 54.230.176.30 54.230.176.45
 ```
 Output:
@@ -58,9 +67,10 @@ Output:
 ```
 
 ### Custom Delimiters
+You can specify a custom delimiter for the output. The default delimiter is a space.
 #### Comma (,) Delimited
-```zsh
-cloudip 54.230.176.25 --delimiter ,
+```shell
+cloudip 54.230.176.25 --delimiter=','
 ```
 Output:
 ```
@@ -68,25 +78,96 @@ Output:
 ```
 
 #### Tab (\t) Delimited
-```zsh
-cloudip 54.230.176.25 --delimiter $'\t'
+```shell
+cloudip 54.230.176.25 --delimiter=$'\t'
 ```
 Output:
 ```
 54.230.176.25   aws
 ```
+and any other custom delimiters can be used.
 
-### Table Format Output
-```zsh
-cloudip 54.230.176.25 --pretty
+### Output Formats
+The output format can be specified using the `--format` option. The following formats are supported:
+- `text` (default)
+- `table`
+- `json`
+
+#### text
+Text is the default output format.
+```shell
+cloudip 54.230.176.25
+```
+```shell
+cloudip 54.230.176.25 --format=text
 ```
 Output:
 ```
-+---------------+----------+
-|      IP       | PROVIDER |
-+---------------+----------+
-| 54.230.176.25 | aws      |
-+---------------+----------+
+54.230.176.25 aws
+```
+Use `--header` option to display the header.
+```shell
+cloudip 54.230.176.25 --header
+```
+Output:
+```
+IP Provider
+54.230.176.25 aws
+```
+
+#### table
+```shell
+cloudip 54.230.176.25 --format=table
+```
+Output:
+```
+54.230.176.25   aws
+```
+`--header` option can be used with the table format.
+```shell
+cloudip 54.230.176.25 --format=table --header
+```
+Output:
+```
+IP              PROVIDER 
+54.230.176.25   aws
+```
+
+#### json
+```shell
+cloudip 54.230.176.25 --format=json
+```
+Output:
+```json
+[{"IP":"54.230.176.25","Provider":"aws"}]
+```
+You can use with `jq` to format the JSON output.
+```shell
+cloudip 54.230.176.25 --format=json | jq
+```
+Output:
+```json
+[
+  {
+    "IP": "54.230.176.25",
+    "Provider": "aws"
+  }
+]
+```
+
+#### csv
+csv format is not supported `--format` option.
+
+You can get output in CSV format using `--format=text` and `--delimiter=','` options. 
+If you want to get result with header, use `--header` option.
+ 
+```shell
+cloudip 54.230.176.25 --format=text --delimiter=',' --header
+```
+Output:
+```
+IP,Provider
+54.230.176.25,aws
 ```
 
 ---
@@ -94,7 +175,7 @@ Output:
 ## Build from Source
 1. Ensure that Go is installed (Go v1.20 or later is recommended).
 2. Use the `make` command to build the project:
-   ```zsh
+   ```shell
    git clone https://github.com/jongwoo328/cloudip.git
    go mod tidy
    cd cloudip
