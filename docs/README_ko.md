@@ -29,8 +29,17 @@ Release 페이지에서 최신 바이너리를 다운로드하세요.
 
 
 ## 사용 방법
+### 버전 확인
+```shell
+cloudip -v
+```
+출력:
+```
+0.3.0
+```
+
 ### 단일 IP 확인
-```zsh
+```shell
 cloudip 54.230.176.25
 ```
 출력:
@@ -39,7 +48,7 @@ cloudip 54.230.176.25
 ```
 
 ### 다중 IP 확인
-```zsh
+```shell
 cloudip 54.230.176.25 54.230.176.30 54.230.176.45
 ```
 출력:
@@ -50,9 +59,10 @@ cloudip 54.230.176.25 54.230.176.30 54.230.176.45
 ```
 
 ### 구분자 지정
+출력에 사용할 구분자를 지정할 수 있습니다. 기본 구분자는 공백입니다.
 #### 쉼표(,) 구분
-```zsh
-cloudip 54.230.176.25 --delimiter ,
+```shell
+cloudip 54.230.176.25 --delimiter=','
 ```
 출력:
 ```
@@ -60,32 +70,103 @@ cloudip 54.230.176.25 --delimiter ,
 ```
 
 #### 탭(\t) 구분
-```zsh
-cloudip 54.230.176.25 --delimiter $'\t'
+```shell
+cloudip 54.230.176.25 --delimiter=$'\t'
 ```
 출력:
 ```
 54.230.176.25   aws
 ```
+그리고 다른 사용자 정의 구분자도 사용할 수 있습니다.
 
-### 테이블 형식 출력
-```zsh
-cloudip 54.230.176.25 --pretty
+### 출력 형식
+`--format` 옵션을 사용하여 출력 형식을 지정할 수 있습니다. 현재 지원되는 형식은 다음과 같습니다:
+- `text` (기본값)
+- `table`
+- `json`
+
+#### text
+텍스트는 기본 출력 형식입니다.
+```shell
+cloudip 54.230.176.25
+```
+```shell
+cloudip 54.230.176.25 --format=text
 ```
 출력:
 ```
-+---------------+----------+
-|      IP       | PROVIDER |
-+---------------+----------+
-| 54.230.176.25 | aws      |
-+---------------+----------+
+54.230.176.25 aws
+```
+`--header` 옵션을 사용하여 헤더를 출력할 수 있습니다.
+```shell
+cloudip 54.230.176.25 --header
+```
+출력:
+```
+IP Provider
+54.230.176.25 aws
 ```
 
+#### table
+```shell
+cloudip 54.230.176.25 --format=table
+```
+출력:
+```
+54.230.176.25   aws
+```
+테이블 형식 출력에 `--header` 옵션을 사용할 수 있습니다.
+```shell
+cloudip 54.230.176.25 --format=table --header
+```
+출력:
+```
+IP              PROVIDER 
+54.230.176.25   aws
+```
+
+#### json
+```shell
+cloudip 54.230.176.25 --format=json
+```
+출력:
+```json
+[{"IP":"54.230.176.25","Provider":"aws"}]
+```
+`jq`를 사용하여 JSON 출력을 포맷팅할 수 있습니다.
+```shell
+cloudip 54.230.176.25 --format=json | jq
+```
+출력:
+```json
+[
+  {
+    "IP": "54.230.176.25",
+    "Provider": "aws"
+  }
+]
+```
+
+#### csv
+csv 형식은 `--format` 옵션의 값으로 지원하지 않습니다.
+
+대신 `--format=text`와 `--delimiter=','` 옵션을 사용하여 csv 형식으로 출력할 수 있습니다.
+헤더를 출력하려면 `--header` 옵션을 사용하세요.
+```shell
+cloudip 54.230.176.25 --format=text --delimiter=',' --header
+```
+출력:
+```
+IP,Provider
+54.230.176.25,aws
+```
+
+---
 
 ## 소스에서 빌드
 1. Go가 설치되어 있는지 확인하세요 (Go v1.20 이상 권장).
 2. 다음 명령어를 사용하여 프로젝트를 빌드하세요:
-   ```zsh
+   ```shell
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
@@ -93,6 +174,7 @@ cloudip 54.230.176.25 --pretty
    ```
 3. 빌드된 바이너리는 `build/` 디렉토리에 생성됩니다.
 
+---
 
 ## 라이선스
 이 프로젝트는 [Apache License 2.0](./LICENSE)에 따라 라이선스가 부여됩니다.
