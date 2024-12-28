@@ -55,14 +55,25 @@ func printResult(results *[]internal.CheckIpResult) {
 	if Args.pretty {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"IP", "Provider"})
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
 		for _, r := range *results {
-			var provider = getProviderFromResult(r.Result)
+			var provider string
+			if r.Error != nil {
+				provider = "ERROR"
+			} else {
+				provider = getProviderFromResult(r.Result)
+			}
 			table.Append([]string{r.Ip, provider})
 		}
 		table.Render()
 	} else {
 		for _, r := range *results {
-			var provider = getProviderFromResult(r.Result)
+			var provider string
+			if r.Error != nil {
+				provider = "ERROR"
+			} else {
+				provider = getProviderFromResult(r.Result)
+			}
 			fmt.Printf("%s%s%s\n", r.Ip, Args.delimiter, provider)
 		}
 	}

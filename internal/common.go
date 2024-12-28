@@ -5,6 +5,7 @@ const AppName = "cloudip"
 type CheckIpResult struct {
 	Ip     string
 	Result Result
+	Error  error
 }
 
 type Result struct {
