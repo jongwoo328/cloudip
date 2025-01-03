@@ -4,22 +4,27 @@ import (
 	"cloudip/util"
 	"fmt"
 	"net"
+	"sync"
 )
 
 var v4Tree *util.CIDRTree
 var v6Tree *util.CIDRTree
 
-func init() {
-	v4Tree = util.NewCIDRTree()
-	v6Tree = util.NewCIDRTree()
+var initialized = false
+var initializeLock = sync.Mutex{}
 
-	err := ensureMetadataFile()
-	if err != nil {
-		util.PrintErrorTrace(err)
+func Initialize() {
+	if initialized {
 		return
 	}
 
-	err = ipDataManagerAws.EnsureDataFile()
+	initializeLock.Lock()
+	defer initializeLock.Unlock()
+
+	v4Tree = util.NewCIDRTree()
+	v6Tree = util.NewCIDRTree()
+
+	err := ipDataManagerAws.EnsureDataFile()
 	if err != nil {
 		util.PrintErrorTrace(err)
 		return
@@ -34,6 +39,8 @@ func init() {
 	for _, prefix := range awsIpRangeData.Ipv6Prefixes {
 		v6Tree.AddCIDR(prefix.Ipv6Prefix)
 	}
+
+	initialized = true
 }
 
 func IsAwsIp(ip string) (bool, error) {

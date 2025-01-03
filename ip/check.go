@@ -25,6 +25,7 @@ func checkCloudIp(ip string) (common.Result, error) {
 	result := common.Result{}
 	for _, provider := range Providers {
 		if provider == common.AWS {
+			aws.Initialize()
 			isAwsIp, err := aws.IsAwsIp(ip)
 			if err != nil {
 				return result, err
@@ -35,6 +36,7 @@ func checkCloudIp(ip string) (common.Result, error) {
 			}
 		}
 		if provider == common.GCP {
+			gcp.Initialize()
 			isGcpIp, err := gcp.IsGcpIp(ip)
 			if err != nil {
 				return result, err
