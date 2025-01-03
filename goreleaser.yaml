@@ -15,7 +15,7 @@ builds:
       - darwin_arm64
     ldflags:
       - "-X 'cloudip/cmd.Version={{.Version}}'"
-    binary: "{{.ProjectName}}_{{.Version}}_{{.Target}}"
+    binary: "{{.ProjectName}}_{{.Version}}_{{.Os}}_{{.Arch}}"
     main: ./ # 메인 패키지 경로 지정
     no_unique_dist_dir: true
 
