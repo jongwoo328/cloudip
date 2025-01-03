@@ -38,7 +38,7 @@ Release 페이지에서 최신 바이너리를 다운로드하세요.
 ## 사용 방법
 ### 버전 확인
 ```shell
-cloudip -v
+cloudip version
 ```
 출력:
 ```
@@ -166,6 +166,19 @@ cloudip 54.230.176.25 --format=text --delimiter=',' --header
 ```
 IP,Provider
 54.230.176.25,aws
+```
+
+### 상세 출력
+`--verbose` 또는 `-v` 옵션을 사용하여 상세한 출력을 확인할 수 있습니다.
+```shell
+cloudip --verbose 54.230.176.25
+```
+Output:
+```
+AWS IP ranges file not exists.
+Downloading AWS IP ranges...
+AWS IP ranges updated [2024-12-27 04:12:30]
+54.230.176.25 aws
 ```
 
 ---
