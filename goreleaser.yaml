@@ -29,23 +29,3 @@ archives:
 
 checksum:
   name_template: "checksums.txt"
-
-changelog:
-  sort: asc
-  use: github
-  abbrev: -1
-  groups:
-    - title: "Features"
-      order: 0
-      regexp: '^feat(\([[:word:]]+\))??!?:.+$'
-    - title: "Bug Fixes"
-      order: 1
-      regexp: '^fix(\([[:word:]]+\))?!?:.+$'
-    - title: "Others"
-      order: 2
-
-release:
-  mode: replace
-  github:
-    owner: jongwoo328 # GitHub 사용자명
-    name: cloudip # GitHub 저장소명
