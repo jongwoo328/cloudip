@@ -2,7 +2,7 @@
 
 [English](../README.md) | [한국어](./README_ko.md)
 
-`cloudip`는 입력된 IP 주소가 어떤 클라우드 제공자(예: AWS, GCP, Azure 등)에 의해 관리되는지 식별하는 CLI 도구입니다. 단일 또는 여러 IP를 입력할 수 있으며, 결과를 간단한 텍스트 형식 또는 보기 좋은 테이블 형식으로 출력할 수 있습니다.
+`cloudip`는 입력된 IP 주소가 어떤 클라우드 제공자(예: AWS, GCP, Azure 등)에 의해 관리되는지 식별하는 CLI 도구입니다. 단일 또는 여러 IP를 입력할 수 있으며, 결과를 json, table과 같은 다양한 형식으로 출력할 수 있습니다.
 
 **🚨 경고 🚨**
 
@@ -25,7 +25,7 @@ yay -S cloudip
 ```
 
 ### 바이너리 다운로드
-Release 페이지에서 최신 바이너리를 다운로드하세요.
+[Releases](https://github.com/jongwoo328/cloudip/releases) 페이지에서 최신 바이너리를 다운로드하세요.
 
 **지원 플랫폼**:
 - Linux (x86)
