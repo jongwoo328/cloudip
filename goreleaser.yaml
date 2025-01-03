@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
+project_name: cloudip
+version: 2
+
+builds:
+  - id: default
+    env:
+      - CGO_ENABLED=0
+    targets:
+      - linux_amd64
+      - linux_arm64
+      - linux_386
+      - darwin_amd64
+      - darwin_arm64
+    ldflags:
+      - "-X 'cloudip/cmd.Version={{.Version}}'"
+    binary: "{{.ProjectName}}_{{.Version}}_{{.Os}}_{{.Arch}}"
+    main: ./ # 메인 패키지 경로 지정
+    no_unique_dist_dir: true
+
+archives:
+  - format: tar.gz
+    name_template: "archives/{{.ProjectName}}_{{.Version}}_{{.Os}}_{{.Arch}}"
+    files:
+      - LICENSE
+      - README.md
+      - docs/
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  use: github
+  abbrev: -1
+  groups:
+    - title: "## Features"
+      order: 0
+      regexp: '^feat(\([[:word:]]+\))??!?:.+$'
+    - title: "## Bug Fixes"
+      order: 1
+      regexp: '^fix(\([[:word:]]+\))?!?:.+$'
+    - title: "## Others"
+      order: 2
+
+release:
+  mode: replace
+  github:
+    owner: jongwoo328 # GitHub 사용자명
+    name: cloudip # GitHub 저장소명
+  extra_files:
+    - glob: dist/archives/*
+    - glob: dist/cloudip*
+

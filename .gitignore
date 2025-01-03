@@ -118,3 +118,4 @@ fabric.properties
 
 build/
 .DS_Store
+dist/
