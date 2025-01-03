@@ -42,7 +42,7 @@ cloudip version
 ```
 Output:
 ```
-0.4.0
+0.5.0
 ```
 
 ### Single IP Check
