@@ -49,5 +49,3 @@ release:
   github:
     owner: jongwoo328 # GitHub 사용자명
     name: cloudip # GitHub 저장소명
-  extra_files:
-    - glob: dist/archives/*
