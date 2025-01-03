@@ -120,15 +120,16 @@ func (ipDataManager *IpDataManagerGcp) DownloadData() {
 
 func (ipDataManager *IpDataManagerGcp) EnsureDataFile() error {
 	if !util.IsFileExists(DataFilePathAws) {
-		common.VerboseOutput("GCP Iop ranges file not exists.")
+		common.VerboseOutput("GCP IP ranges file not exists.")
 		ipDataManagerGcp.DownloadData()
+		return nil
 	}
 	if isExpired() {
 		common.VerboseOutput("GCP IP ranges are outdated. Updating to the latest version...")
 		ipDataManagerGcp.DownloadData()
-	} else {
-		common.VerboseOutput("GCP IP ranges are up-to-date.")
+		return nil
 	}
+	common.VerboseOutput("GCP IP ranges are up-to-date.")
 
 	return nil
 }

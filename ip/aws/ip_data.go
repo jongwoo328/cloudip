@@ -130,14 +130,15 @@ func (IpDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 		common.VerboseOutput("AWS IP ranges file not exists.")
 		// Download the AWS IP ranges file
 		IpDataManagerAws.DownloadData()
+		return nil
 	}
 	if isExpired() {
 		common.VerboseOutput("AWS IP ranges are outdated. Updating to the latest version...")
 		// update the file
 		IpDataManagerAws.DownloadData()
-	} else {
-		common.VerboseOutput("AWS IP ranges are up-to-date.")
+		return nil
 	}
+	common.VerboseOutput("AWS IP ranges are up-to-date.")
 
 	return nil
 }
