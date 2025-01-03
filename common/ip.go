@@ -1,6 +1,4 @@
-package internal
-
-const AppName = "cloudip"
+package common
 
 type CheckIpResult struct {
 	Ip     string

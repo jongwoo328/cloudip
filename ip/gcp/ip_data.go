@@ -1,8 +1,8 @@
-package aws
+package gcp
 
 import (
-	"cloudip/internal"
-	"cloudip/internal/util"
+	"cloudip/common"
+	"cloudip/util"
 	"fmt"
 	"io"
 	"log"
@@ -11,39 +11,32 @@ import (
 	"time"
 )
 
-type IpDataManagerAws struct {
+type IpDataManagerGcp struct {
 	DataURI      string
 	DataFile     string
 	DataFilePath string
-	IpRange      IpRangeDataAws
+	IpRange      IpRangeDataGcp
 }
 
-type IpRangeDataAws struct {
-	SyncToken  string `json:"syncToken"`
-	CreateDate string `json:"createDate"`
-	Prefixes   []struct {
-		IpPrefix           string `json:"ip_prefix"`
-		Region             string `json:"region"`
-		Service            string `json:"service"`
-		NetworkBorderGroup string `json:"network_border_group"`
+type IpRangeDataGcp struct {
+	SyncToken    string `json:"syncToken"`
+	CreationTime string `json:"creationTime"`
+	Prefixes     []struct {
+		Ipv4Prefix string `json:"ipv4Prefix"`
+		Ipv6Prefix string `json:"ipv6Prefix"`
+		Service    string `json:"service"`
+		Scope      string `json:"scope"`
 	} `json:"prefixes"`
-	Ipv6Prefixes []struct {
-		Ipv6Prefix         string `json:"ipv6_prefix"`
-		Region             string `json:"region"`
-		Service            string `json:"service"`
-		NetworkBorderGroup string `json:"network_border_group"`
-	} `json:"ipv6_prefixes"`
 }
 
-func (ipRange IpRangeDataAws) IsEmpty() bool {
+func (ipRange IpRangeDataGcp) IsEmpty() bool {
 	return ipRange.SyncToken == "" &&
-		ipRange.CreateDate == "" &&
-		len(ipRange.Prefixes) == 0 &&
-		len(ipRange.Ipv6Prefixes) == 0
+		ipRange.CreationTime == "" &&
+		len(ipRange.Prefixes) == 0
 }
 
-func (IpDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, error) {
-	resp, err := http.Head(IpDataManagerAws.DataURI)
+func (ipDataManager *IpDataManagerGcp) GetLastModifiedUpstream() (time.Time, error) {
+	resp, err := http.Head(ipDataManager.DataURI)
 	if err != nil {
 		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error checking metadata file expiration"))
 		return time.Time{}, err
@@ -70,8 +63,9 @@ func (IpDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, 
 
 	return lastModifiedDate, nil
 }
-func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
-	resp, err := http.Get(IpDataManagerAws.DataURI)
+
+func (ipDataManager *IpDataManagerGcp) DownloadData() {
+	resp, err := http.Get(ipDataManager.DataURI)
 	if err != nil {
 		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error downloading dataFile"))
 		return
@@ -83,7 +77,7 @@ func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
 		return
 	}
 
-	dataFile, err := os.OpenFile(IpDataManagerAws.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	dataFile, err := os.OpenFile(ipDataManager.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error opening dataFile"))
 		return
@@ -108,8 +102,8 @@ func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
 	}
 
 	if metadataManager.Metadata.LastModified != currentLastModified.Unix() {
-		metadata := internal.CloudMetadata{
-			Type:         internal.AWS,
+		metadata := common.CloudMetadata{
+			Type:         common.AWS,
 			LastModified: currentLastModified.Unix(),
 		}
 		if err := writeMetadata(&metadata); err != nil {
@@ -128,80 +122,72 @@ func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
 	}()
 }
 
-func (IpDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
-
-	if !util.IsFileExists(MetadataFilePathAws) {
-		// Create metadata file
+func (ipDataManager *IpDataManagerGcp) EnsureDataFile() error {
+	if !util.IsFileExists(ipDataManager.DataFilePath) {
 		if err := os.MkdirAll(ProviderDirectory, 0755); err != nil {
-			err = util.ErrorWithInfo(err, "error creating provider directory")
+			err = util.ErrorWithInfo(err, "Error creating gcp directory")
 			util.PrintErrorTrace(err)
 			return err
 		}
 		metadataFile, err := os.OpenFile(MetadataFilePathAws, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 		if err != nil {
-			err = util.ErrorWithInfo(err, "error creating metadata file")
+			err = util.ErrorWithInfo(err, "Error creating metadata file")
 			util.PrintErrorTrace(err)
 			return err
 		}
 
-		err = writeMetadata(&internal.CloudMetadata{
-			Type:         internal.AWS,
+		err = writeMetadata(&common.CloudMetadata{
+			Type:         common.GCP,
 			LastModified: 0,
 		})
 
 		if err != nil {
-			err = util.ErrorWithInfo(err, "error writing metadata")
+			err = util.ErrorWithInfo(err, "Error writing metadata")
 			util.PrintErrorTrace(err)
 			return err
 		}
 		defer func() {
 			if fileCloseErr := metadataFile.Close(); fileCloseErr != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "error closing metadata file"))
+				util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "Error closing metadata file"))
 			}
 		}()
 	}
 	if !util.IsFileExists(DataFilePathAws) {
-		// Download the AWS IP ranges file
-		IpDataManagerAws.DownloadData()
+		ipDataManagerGcp.DownloadData()
 	}
 	if isExpired() {
-		// update the file
-		IpDataManagerAws.DownloadData()
+		ipDataManagerGcp.DownloadData()
 	}
 
 	return nil
 }
 
-func (IpDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
-	if !IpDataManagerAws.IpRange.IsEmpty() {
-		return &IpDataManagerAws.IpRange
+func (ipDataManager *IpDataManagerGcp) LoadIpData() *IpRangeDataGcp {
+	if !ipDataManager.IpRange.IsEmpty() {
+		return &ipDataManagerGcp.IpRange
 	}
 
-	awsIpRangeData := IpRangeDataAws{}
-	ipDataFile, err := os.Open(IpDataManagerAws.DataFilePath)
+	gcpIpRangeData := IpRangeDataGcp{}
+	ipDataFile, err := os.Open(ipDataManager.DataFilePath)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error opening data file")
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error opening data file"))
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
-	err = util.HandleJSON(ipDataFile, &awsIpRangeData, "read")
+	err = util.HandleJSON(ipDataFile, &gcpIpRangeData, "read")
 	if err != nil {
 		err = util.ErrorWithInfo(err, "Error reading data file")
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
 
-	IpDataManagerAws.IpRange = awsIpRangeData
-	return &IpDataManagerAws.IpRange
+	ipDataManager.IpRange = gcpIpRangeData
+	return &ipDataManager.IpRange
 }
 
-var ipDataManagerAws = &IpDataManagerAws{
+var ipDataManagerGcp = &IpDataManagerGcp{
 	DataURI:      DataUrl,
 	DataFile:     DataFile,
 	DataFilePath: DataFilePathAws,
-	IpRange:      IpRangeDataAws{},
-}
-
-func GetIpDataManagerAws() *IpDataManagerAws {
-	return ipDataManagerAws
+	IpRange:      IpRangeDataGcp{},
 }

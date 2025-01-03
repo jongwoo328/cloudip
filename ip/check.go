@@ -1,17 +1,17 @@
 package ip
 
 import (
-	"cloudip/internal"
-	"cloudip/internal/ip/aws"
-	"cloudip/internal/ip/gcp"
+	"cloudip/common"
+	"cloudip/ip/aws"
+	"cloudip/ip/gcp"
 )
 
-func CheckIp(ips *[]string) []internal.CheckIpResult {
-	results := make([]internal.CheckIpResult, len(*ips))
+func CheckIp(ips *[]string) []common.CheckIpResult {
+	results := make([]common.CheckIpResult, len(*ips))
 
 	for index, ip := range *ips {
 		checkResult, err := checkCloudIp(ip)
-		results[index] = internal.CheckIpResult{
+		results[index] = common.CheckIpResult{
 			Ip:     ip,
 			Result: checkResult,
 			Error:  err,
@@ -21,10 +21,10 @@ func CheckIp(ips *[]string) []internal.CheckIpResult {
 	return results
 }
 
-func checkCloudIp(ip string) (internal.Result, error) {
-	result := internal.Result{}
+func checkCloudIp(ip string) (common.Result, error) {
+	result := common.Result{}
 	for _, provider := range Providers {
-		if provider == internal.AWS {
+		if provider == common.AWS {
 			isAwsIp, err := aws.IsAwsIp(ip)
 			if err != nil {
 				return result, err
@@ -34,7 +34,7 @@ func checkCloudIp(ip string) (internal.Result, error) {
 				return result, nil
 			}
 		}
-		if provider == internal.GCP {
+		if provider == common.GCP {
 			isGcpIp, err := gcp.IsGcpIp(ip)
 			if err != nil {
 				return result, err

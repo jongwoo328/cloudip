@@ -1,7 +1,7 @@
-package aws
+package gcp
 
 import (
-	"cloudip/internal/util"
+	"cloudip/util"
 	"fmt"
 	"net"
 )
@@ -19,24 +19,25 @@ func init() {
 		return
 	}
 
-	err = ipDataManagerAws.EnsureDataFile()
+	err = ipDataManagerGcp.EnsureDataFile()
 	if err != nil {
 		util.PrintErrorTrace(err)
 		return
 	}
 
-	awsIpRangeData := *ipDataManagerAws.LoadIpData()
+	gcpIpRangeData := *ipDataManagerGcp.LoadIpData()
 
-	for _, prefix := range awsIpRangeData.Prefixes {
-		v4Tree.AddCIDR(prefix.IpPrefix)
+	for _, prefix := range gcpIpRangeData.Prefixes {
+		if prefix.Ipv4Prefix != "" {
+			v4Tree.AddCIDR(prefix.Ipv4Prefix)
+		} else if prefix.Ipv6Prefix != "" {
+			v6Tree.AddCIDR(prefix.Ipv6Prefix)
+		}
 	}
 
-	for _, prefix := range awsIpRangeData.Ipv6Prefixes {
-		v6Tree.AddCIDR(prefix.Ipv6Prefix)
-	}
 }
 
-func IsAwsIp(ip string) (bool, error) {
+func IsGcpIp(ip string) (bool, error) {
 	parsedIp := net.ParseIP(ip)
 	if parsedIp == nil {
 		return false, fmt.Errorf("Error parsing IP: %s", ip)

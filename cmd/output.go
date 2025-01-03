@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	"cloudip/internal"
+	"cloudip/common"
 	"encoding/json"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"os"
 )
 
-func getProviderFromResult(result internal.Result) string {
+func getProviderFromResult(result common.Result) string {
 	if result.Aws {
 		return "aws"
 	}
@@ -23,21 +23,21 @@ var headers = map[string]string{
 	"Provider": "Provider",
 }
 
-func printResult(results *[]internal.CheckIpResult) {
-	if Flags.format == "text" {
+func printResult(results *[]common.CheckIpResult) {
+	if common.Flags.Format == "text" {
 		printResultAsText(results)
-	} else if Flags.format == "table" {
+	} else if common.Flags.Format == "table" {
 		printResultAsTable(results)
-	} else if Flags.format == "json" {
+	} else if common.Flags.Format == "json" {
 		printResultAsJson(results)
 	} else {
-		fmt.Printf("Invalid output format: %s. Supported formats are: text, table, json\n", Flags.format)
+		fmt.Printf("Invalid output format: %s. Supported formats are: text, table, json\n", common.Flags.Format)
 	}
 }
 
-func printResultAsText(results *[]internal.CheckIpResult) {
-	if Flags.header {
-		fmt.Printf("%s%s%s\n", headers["IP"], Flags.delimiter, headers["Provider"])
+func printResultAsText(results *[]common.CheckIpResult) {
+	if common.Flags.Header {
+		fmt.Printf("%s%s%s\n", headers["IP"], common.Flags.Delimiter, headers["Provider"])
 	}
 	for _, r := range *results {
 		var provider string
@@ -46,12 +46,12 @@ func printResultAsText(results *[]internal.CheckIpResult) {
 		} else {
 			provider = getProviderFromResult(r.Result)
 		}
-		fmt.Printf("%s%s%s\n", r.Ip, Flags.delimiter, provider)
+		fmt.Printf("%s%s%s\n", r.Ip, common.Flags.Delimiter, provider)
 	}
 }
-func printResultAsTable(results *[]internal.CheckIpResult) {
+func printResultAsTable(results *[]common.CheckIpResult) {
 	table := tablewriter.NewWriter(os.Stdout)
-	if Flags.header {
+	if common.Flags.Header {
 		table.SetHeader([]string{headers["IP"], headers["Provider"]})
 	}
 	table.SetBorder(false)
@@ -78,7 +78,7 @@ func printResultAsTable(results *[]internal.CheckIpResult) {
 	table.Render()
 }
 
-func printResultAsJson(results *[]internal.CheckIpResult) {
+func printResultAsJson(results *[]common.CheckIpResult) {
 	resultSlice := make([]map[string]string, 0)
 	for _, r := range *results {
 		resultMap := map[string]string{

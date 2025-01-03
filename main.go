@@ -2,7 +2,7 @@ package main
 
 import (
 	"cloudip/cmd"
-	"cloudip/internal/util"
+	"cloudip/util"
 	"os"
 )
 
