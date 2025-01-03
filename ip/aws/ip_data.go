@@ -70,7 +70,9 @@ func (IpDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, 
 
 	return lastModifiedDate, nil
 }
+
 func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
+	common.VerboseOutput("Downloading AWS IP ranges...")
 	resp, err := http.Get(IpDataManagerAws.DataURI)
 	if err != nil {
 		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error downloading dataFile"))
@@ -101,12 +103,6 @@ func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
 		return
 	}
 
-	err = readMetadata()
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error reading metadata"))
-		return
-	}
-
 	if metadataManager.Metadata.LastModified != currentLastModified.Unix() {
 		metadata := common.CloudMetadata{
 			Type:         common.AWS,
@@ -116,6 +112,7 @@ func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
 			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error writing metadata"))
 			return
 		}
+		common.VerboseOutput(fmt.Sprintf("AWS IP ranges updated [%s]", util.FormatToTimestamp(currentLastModified)))
 	}
 
 	defer func() {
@@ -129,45 +126,19 @@ func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
 }
 
 func (IpDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
-
-	if !util.IsFileExists(MetadataFilePathAws) {
-		// Create metadata file
-		if err := os.MkdirAll(ProviderDirectory, 0755); err != nil {
-			err = util.ErrorWithInfo(err, "error creating provider directory")
-			util.PrintErrorTrace(err)
-			return err
-		}
-		metadataFile, err := os.OpenFile(MetadataFilePathAws, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-		if err != nil {
-			err = util.ErrorWithInfo(err, "error creating metadata file")
-			util.PrintErrorTrace(err)
-			return err
-		}
-
-		err = writeMetadata(&common.CloudMetadata{
-			Type:         common.AWS,
-			LastModified: 0,
-		})
-
-		if err != nil {
-			err = util.ErrorWithInfo(err, "error writing metadata")
-			util.PrintErrorTrace(err)
-			return err
-		}
-		defer func() {
-			if fileCloseErr := metadataFile.Close(); fileCloseErr != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "error closing metadata file"))
-			}
-		}()
-	}
 	if !util.IsFileExists(DataFilePathAws) {
+		common.VerboseOutput("AWS IP ranges file not exists.")
 		// Download the AWS IP ranges file
 		IpDataManagerAws.DownloadData()
+		return nil
 	}
 	if isExpired() {
+		common.VerboseOutput("AWS IP ranges are outdated. Updating to the latest version...")
 		// update the file
 		IpDataManagerAws.DownloadData()
+		return nil
 	}
+	common.VerboseOutput("AWS IP ranges are up-to-date.")
 
 	return nil
 }

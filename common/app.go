@@ -4,9 +4,9 @@ const AppName = "cloudip"
 
 type CloudIpFlag struct {
 	Delimiter string
-	Version   bool
 	Format    string
 	Header    bool
+	Verbose   bool
 }
 
-var Flags = CloudIpFlag{}
+var Flags = &CloudIpFlag{}

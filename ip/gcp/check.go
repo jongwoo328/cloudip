@@ -4,22 +4,27 @@ import (
 	"cloudip/util"
 	"fmt"
 	"net"
+	"sync"
 )
 
 var v4Tree *util.CIDRTree
 var v6Tree *util.CIDRTree
 
-func init() {
-	v4Tree = util.NewCIDRTree()
-	v6Tree = util.NewCIDRTree()
+var initialized = false
+var initializeLock = sync.Mutex{}
 
-	err := ensureMetadataFile()
-	if err != nil {
-		util.PrintErrorTrace(err)
+func Initialize() {
+	if initialized {
 		return
 	}
 
-	err = ipDataManagerGcp.EnsureDataFile()
+	initializeLock.Lock()
+	defer initializeLock.Unlock()
+
+	v4Tree = util.NewCIDRTree()
+	v6Tree = util.NewCIDRTree()
+
+	err := ipDataManagerGcp.EnsureDataFile()
 	if err != nil {
 		util.PrintErrorTrace(err)
 		return
@@ -35,6 +40,7 @@ func init() {
 		}
 	}
 
+	initialized = true
 }
 
 func IsGcpIp(ip string) (bool, error) {

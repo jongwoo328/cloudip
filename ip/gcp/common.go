@@ -13,4 +13,4 @@ const DataUrl = "https://www.gstatic.com/ipranges/cloud.json"
 
 var ProviderDirectory = fmt.Sprintf("%s/%s", appDir, "gcp")
 var DataFilePathAws = fmt.Sprintf("%s/%s", ProviderDirectory, DataFile)
-var MetadataFilePathAws = fmt.Sprintf("%s/%s", ProviderDirectory, MetadataFile)
+var MetadataFilePathGcp = fmt.Sprintf("%s/%s", ProviderDirectory, MetadataFile)

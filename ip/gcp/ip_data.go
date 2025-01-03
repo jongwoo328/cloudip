@@ -65,6 +65,7 @@ func (ipDataManager *IpDataManagerGcp) GetLastModifiedUpstream() (time.Time, err
 }
 
 func (ipDataManager *IpDataManagerGcp) DownloadData() {
+	common.VerboseOutput("Downloading GCP IP ranges...")
 	resp, err := http.Get(ipDataManager.DataURI)
 	if err != nil {
 		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error downloading dataFile"))
@@ -95,12 +96,6 @@ func (ipDataManager *IpDataManagerGcp) DownloadData() {
 		return
 	}
 
-	err = readMetadata()
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error reading metadata"))
-		return
-	}
-
 	if metadataManager.Metadata.LastModified != currentLastModified.Unix() {
 		metadata := common.CloudMetadata{
 			Type:         common.AWS,
@@ -110,6 +105,7 @@ func (ipDataManager *IpDataManagerGcp) DownloadData() {
 			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error writing metadata"))
 			return
 		}
+		common.VerboseOutput(fmt.Sprintf("GCP IP ranges updated [%s]", util.FormatToTimestamp(currentLastModified)))
 	}
 
 	defer func() {
@@ -123,41 +119,17 @@ func (ipDataManager *IpDataManagerGcp) DownloadData() {
 }
 
 func (ipDataManager *IpDataManagerGcp) EnsureDataFile() error {
-	if !util.IsFileExists(ipDataManager.DataFilePath) {
-		if err := os.MkdirAll(ProviderDirectory, 0755); err != nil {
-			err = util.ErrorWithInfo(err, "Error creating gcp directory")
-			util.PrintErrorTrace(err)
-			return err
-		}
-		metadataFile, err := os.OpenFile(MetadataFilePathAws, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-		if err != nil {
-			err = util.ErrorWithInfo(err, "Error creating metadata file")
-			util.PrintErrorTrace(err)
-			return err
-		}
-
-		err = writeMetadata(&common.CloudMetadata{
-			Type:         common.GCP,
-			LastModified: 0,
-		})
-
-		if err != nil {
-			err = util.ErrorWithInfo(err, "Error writing metadata")
-			util.PrintErrorTrace(err)
-			return err
-		}
-		defer func() {
-			if fileCloseErr := metadataFile.Close(); fileCloseErr != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "Error closing metadata file"))
-			}
-		}()
-	}
 	if !util.IsFileExists(DataFilePathAws) {
+		common.VerboseOutput("GCP IP ranges file not exists.")
 		ipDataManagerGcp.DownloadData()
+		return nil
 	}
 	if isExpired() {
+		common.VerboseOutput("GCP IP ranges are outdated. Updating to the latest version...")
 		ipDataManagerGcp.DownloadData()
+		return nil
 	}
+	common.VerboseOutput("GCP IP ranges are up-to-date.")
 
 	return nil
 }

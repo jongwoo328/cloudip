@@ -38,7 +38,7 @@ Download the latest binary from the Releases page.
 ## Usage
 ### Version Check
 ```shell
-cloudip -v
+cloudip version
 ```
 Output:
 ```
@@ -168,6 +168,20 @@ Output:
 IP,Provider
 54.230.176.25,aws
 ```
+
+### Verbose Output
+You can use the `--verbose`, `-v` option to display detailed information.
+```shell
+cloudip --verbose 54.230.176.25
+```
+Output:
+```
+AWS IP ranges file not exists.
+Downloading AWS IP ranges...
+AWS IP ranges updated [2024-12-27 04:12:30]
+54.230.176.25 aws
+```
+
 
 ---
 
