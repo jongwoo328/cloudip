@@ -16,8 +16,12 @@ builds:
     ldflags:
       - "-X 'cloudip/cmd.Version={{.Version}}'"
     binary: "{{.ProjectName}}_{{.Version}}_{{.Os}}_{{.Arch}}"
-    main: ./ # 메인 패키지 경로 지정
+    main: ./
     no_unique_dist_dir: true
+
+snapshot:
+#  use snapshot for production build and archiving
+  version_template: "{{.Major}}.{{.Minor}}.{{.Patch}}"
 
 archives:
   - format: tar.gz
