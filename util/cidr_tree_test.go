@@ -10,6 +10,7 @@ func TestAddCIDRAndMatch(t *testing.T) {
 	// Add test CIDRs
 	tree.AddCIDR("2600:1f13:a0d:a700::/56")
 	tree.AddCIDR("192.168.1.0/24")
+	tree.AddCIDR("4.145.74.52/30")
 
 	// Test cases
 	tests := []struct {
@@ -24,6 +25,7 @@ func TestAddCIDRAndMatch(t *testing.T) {
 		{"192.168.2.1", false, "IPv4 address outside CIDR"},
 		{"invalid-ip", false, "Invalid IP format"},
 		{"::ffff:192.168.1.1", true, "IPv4-mapped IPv6 address within CIDR"},
+		{"4.145.74.53", true, "Simple test"},
 	}
 
 	// Execute tests

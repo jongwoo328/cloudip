@@ -3,6 +3,7 @@ package ip
 import (
 	"cloudip/common"
 	"cloudip/ip/aws"
+	"cloudip/ip/azure"
 	"cloudip/ip/gcp"
 )
 
@@ -43,6 +44,17 @@ func checkCloudIp(ip string) (common.Result, error) {
 			}
 			if isGcpIp {
 				result.Gcp = isGcpIp
+				return result, nil
+			}
+		}
+		if provider == common.Azure {
+			azure.Initialize()
+			isAzureIp, err := azure.IsAzureIp(ip)
+			if err != nil {
+				return result, err
+			}
+			if isAzureIp {
+				result.Azure = isAzureIp
 				return result, nil
 			}
 		}

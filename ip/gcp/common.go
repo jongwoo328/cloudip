@@ -5,12 +5,15 @@ import (
 	"fmt"
 )
 
-var appDir, _ = util.GetAppDir()
+var appDir = util.GetAppDir()
 
 const DataFile = "gcp.json"
 const MetadataFile = ".metadata.json"
-const DataUrl = "https://www.gstatic.com/ipranges/cloud.json"
+
+func getDataUrl() string {
+	return "https://www.gstatic.com/ipranges/cloud.json"
+}
 
 var ProviderDirectory = fmt.Sprintf("%s/%s", appDir, "gcp")
-var DataFilePathAws = fmt.Sprintf("%s/%s", ProviderDirectory, DataFile)
+var DataFilePathGcp = fmt.Sprintf("%s/%s", ProviderDirectory, DataFile)
 var MetadataFilePathGcp = fmt.Sprintf("%s/%s", ProviderDirectory, MetadataFile)
