@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"time"
 )
@@ -43,24 +42,14 @@ func (ipRange IpRangeDataAws) IsEmpty() bool {
 }
 
 func (ipDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, error) {
-	resp, err := http.Head(ipDataManagerAws.DataURI)
+	headers, err := util.GetHeadRequestHeader(ipDataManagerAws.DataURI)
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error checking metadata file expiration"))
-		return time.Time{}, err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing response body"))
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		err := util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error checking metadata file expiration")
+		err = util.ErrorWithInfo(err, "Error getting header from request")
 		util.PrintErrorTrace(err)
 		return time.Time{}, err
 	}
 
-	lastModified := resp.Header.Get("Last-Modified")
+	lastModified := headers.Get("Last-Modified")
 	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
 	if err != nil {
 		err := util.ErrorWithInfo(err, "Error parsing Date header")
