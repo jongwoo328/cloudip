@@ -3,6 +3,7 @@ package aws
 import (
 	"cloudip/common"
 	"cloudip/util"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -42,8 +43,8 @@ func (ipRange IpRangeDataAws) IsEmpty() bool {
 		len(ipRange.Ipv6Prefixes) == 0
 }
 
-func (IpDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, error) {
-	resp, err := http.Head(IpDataManagerAws.DataURI)
+func (ipDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, error) {
+	resp, err := http.Head(ipDataManagerAws.DataURI)
 	if err != nil {
 		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error checking metadata file expiration"))
 		return time.Time{}, err
@@ -71,36 +72,44 @@ func (IpDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, 
 	return lastModifiedDate, nil
 }
 
-func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
+func (ipDataManagerAws *IpDataManagerAws) DownloadData() error {
 	common.VerboseOutput("Downloading AWS IP ranges...")
-	resp, err := http.Get(IpDataManagerAws.DataURI)
+	if ipDataManagerAws.DataURI == "" {
+		return errors.New("cannot get DataURI")
+	}
+	resp, err := http.Get(ipDataManagerAws.DataURI)
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error downloading dataFile"))
-		return
+		err = util.ErrorWithInfo(err, "Error downloading data file")
+		util.PrintErrorTrace(err)
+		return err
 	}
 
 	// 응답 상태 코드 확인
 	if resp.StatusCode != http.StatusOK {
-		util.PrintErrorTrace(util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error downloading dataFile"))
-		return
+		err = util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error downloading data file")
+		util.PrintErrorTrace(err)
+		return err
 	}
 
-	dataFile, err := os.OpenFile(IpDataManagerAws.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	dataFile, err := os.OpenFile(ipDataManagerAws.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error opening dataFile"))
-		return
+		err = util.ErrorWithInfo(err, "Error opening data file")
+		util.PrintErrorTrace(err)
+		return err
 	}
 
 	_, err = io.Copy(dataFile, resp.Body)
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error saving dataFile"))
-		return
+		err = util.ErrorWithInfo(err, "Error saving data file")
+		util.PrintErrorTrace(err)
+		return err
 	}
 
 	currentLastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error parsing Date header"))
-		return
+		err = util.ErrorWithInfo(err, "Error parsing Date header")
+		util.PrintErrorTrace(err)
+		return err
 	}
 
 	if metadataManager.Metadata.LastModified != currentLastModified.Unix() {
@@ -109,8 +118,9 @@ func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
 			LastModified: currentLastModified.Unix(),
 		}
 		if err := writeMetadata(&metadata); err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error writing metadata"))
-			return
+			err = util.ErrorWithInfo(err, "Error writing metadata")
+			util.PrintErrorTrace(err)
+			return err
 		}
 		common.VerboseOutput(fmt.Sprintf("AWS IP ranges updated [%s]", util.FormatToTimestamp(currentLastModified)))
 	}
@@ -120,36 +130,38 @@ func (IpDataManagerAws *IpDataManagerAws) DownloadData() {
 			util.PrintErrorTrace(util.ErrorWithInfo(networkCloseErr, "Error closing response body"))
 		}
 		if fileCloseErr := dataFile.Close(); fileCloseErr != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "Error closing dataFile"))
+			util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "Error closing data file"))
 		}
 	}()
+
+	return nil
 }
 
-func (IpDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
+func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 	if !util.IsFileExists(DataFilePathAws) {
 		common.VerboseOutput("AWS IP ranges file not exists.")
 		// Download the AWS IP ranges file
-		IpDataManagerAws.DownloadData()
-		return nil
+		err := ipDataManagerAws.DownloadData()
+		return err
 	}
 	if isExpired() {
 		common.VerboseOutput("AWS IP ranges are outdated. Updating to the latest version...")
 		// update the file
-		IpDataManagerAws.DownloadData()
-		return nil
+		err := ipDataManagerAws.DownloadData()
+		return err
 	}
 	common.VerboseOutput("AWS IP ranges are up-to-date.")
 
 	return nil
 }
 
-func (IpDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
-	if !IpDataManagerAws.IpRange.IsEmpty() {
-		return &IpDataManagerAws.IpRange
+func (ipDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
+	if !ipDataManagerAws.IpRange.IsEmpty() {
+		return &ipDataManagerAws.IpRange
 	}
 
 	awsIpRangeData := IpRangeDataAws{}
-	ipDataFile, err := os.Open(IpDataManagerAws.DataFilePath)
+	ipDataFile, err := os.Open(ipDataManagerAws.DataFilePath)
 	if err != nil {
 		err = util.ErrorWithInfo(err, "Error opening data file")
 		util.PrintErrorTrace(err)
@@ -162,12 +174,12 @@ func (IpDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
 		log.Fatal(err)
 	}
 
-	IpDataManagerAws.IpRange = awsIpRangeData
-	return &IpDataManagerAws.IpRange
+	ipDataManagerAws.IpRange = awsIpRangeData
+	return &ipDataManagerAws.IpRange
 }
 
 var ipDataManagerAws = &IpDataManagerAws{
-	DataURI:      DataUrl,
+	DataURI:      getDaraUrl(),
 	DataFile:     DataFile,
 	DataFilePath: DataFilePathAws,
 	IpRange:      IpRangeDataAws{},

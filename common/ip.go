@@ -7,8 +7,9 @@ type CheckIpResult struct {
 }
 
 type Result struct {
-	Aws bool
-	Gcp bool
+	Aws   bool
+	Gcp   bool
+	Azure bool
 }
 
 const (

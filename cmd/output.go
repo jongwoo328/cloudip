@@ -15,6 +15,9 @@ func getProviderFromResult(result common.Result) string {
 	if result.Gcp {
 		return "gcp"
 	}
+	if result.Azure {
+		return "azure"
+	}
 	return "unknown"
 }
 
