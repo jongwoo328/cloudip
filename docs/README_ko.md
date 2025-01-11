@@ -194,7 +194,7 @@ AWS IP ranges updated [2024-12-27 04:12:30]
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
-   make build -j
+   go build -o dist --ldflags '-X cloudip/cmd.Version=0.6.0'
    ```
 3. 빌드된 바이너리는 `build/` 디렉토리에 생성됩니다.
 
