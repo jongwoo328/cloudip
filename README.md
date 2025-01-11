@@ -196,7 +196,7 @@ AWS IP ranges updated [2024-12-27 04:12:30]
    git clone https://github.com/jongwoo328/cloudip.git
    go mod tidy
    cd cloudip
-   make build -j
+   go build -o dist --ldflags '-X cloudip/cmd.Version=0.6.0'
    ```
 3. The binary will be generated in the `build/` directory.
 
