@@ -5,7 +5,6 @@ import (
 	"cloudip/util"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -65,40 +64,23 @@ func (ipDataManagerGcp *IpDataManagerGcp) GetLastModifiedUpstream() (time.Time, 
 	return lastModifiedDate, nil
 }
 
-func (ipDataManagerGcp *IpDataManagerGcp) DownloadData() error {
+func (ipDataManagerGcp *IpDataManagerGcp) downloadData() error {
 	common.VerboseOutput("Downloading GCP IP ranges...")
 	if ipDataManagerGcp.DataURI == "" {
 		return errors.New("cannot get DataURI")
 	}
-	resp, err := http.Get(ipDataManagerGcp.DataURI)
+	err := util.DownloadFromUrlToFile(ipDataManagerGcp.DataURI, ipDataManagerGcp.DataFilePath)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error downloading data file")
-		util.PrintErrorTrace(err)
 		return err
 	}
 
-	// 응답 상태 코드 확인
-	if resp.StatusCode != http.StatusOK {
-		err = util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error downloading data file")
-		util.PrintErrorTrace(err)
-		return err
-	}
-
-	dataFile, err := os.OpenFile(ipDataManagerGcp.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	headers, err := util.GetHeadRequestHeader(ipDataManagerGcp.DataURI)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error opening data file")
+		err = util.ErrorWithInfo(err, "Error getting header from request")
 		util.PrintErrorTrace(err)
 		return err
 	}
-
-	_, err = io.Copy(dataFile, resp.Body)
-	if err != nil {
-		err = util.ErrorWithInfo(err, "Error saving data file")
-		util.PrintErrorTrace(err)
-		return err
-	}
-
-	currentLastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
+	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
 	if err != nil {
 		err = util.ErrorWithInfo(err, "Error parsing Date header")
 		util.PrintErrorTrace(err)
@@ -118,27 +100,18 @@ func (ipDataManagerGcp *IpDataManagerGcp) DownloadData() error {
 		common.VerboseOutput(fmt.Sprintf("GCP IP ranges updated [%s]", util.FormatToTimestamp(currentLastModified)))
 	}
 
-	defer func() {
-		if networkCloseErr := resp.Body.Close(); networkCloseErr != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(networkCloseErr, "Error closing response body"))
-		}
-		if fileCloseErr := dataFile.Close(); fileCloseErr != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "Error closing data file"))
-		}
-	}()
-
 	return nil
 }
 
 func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 	if !util.IsFileExists(DataFilePathGcp) {
 		common.VerboseOutput("GCP IP ranges file not exists.")
-		err := ipDataManagerGcp.DownloadData()
+		err := ipDataManagerGcp.downloadData()
 		return err
 	}
 	if isExpired() {
 		common.VerboseOutput("GCP IP ranges are outdated. Updating to the latest version...")
-		err := ipDataManagerGcp.DownloadData()
+		err := ipDataManagerGcp.downloadData()
 		return err
 	}
 	common.VerboseOutput("GCP IP ranges are up-to-date.")
