@@ -2,11 +2,11 @@
 
 [English](./README.md) | [한국어](./docs/README_ko.md)
 
-`cloudip` is a CLI tool that identifies which cloud provider (e.g., AWS, GCP, Azure, etc.) manages the given IP address. You can input a single or multiple IPs, and the results can be displayed in various formats, such as table, json.
+`cloudip` is a CLI tool that identifies cloud provider manages the given IP address. You can input a single or multiple IPs, and the results can be displayed in various formats, such as table, json.
 
 **🚨 Warning 🚨**
 
-This project is currently under development, and features and options may change without notice until the official release. The current version supports only AWS and GCP, with additional cloud providers planned for future updates.
+This project is currently under development, and features and options may change without notice until the official release. 
 
 
 ## Features
@@ -15,6 +15,10 @@ This project is currently under development, and features and options may change
 - **IPv4 and IPv6 Support**: Supports both IPv4 and IPv6 addresses.
 - **Format Output**: Display results in a formatted with the `--format` option.
 
+### Currently Supported Cloud Providers
+- **AWS**: Amazon Web Services
+- **GCP**: Google Cloud Platform
+- **Azure**: Microsoft Azure
 
 ## Installation
 ### Arch Linux
