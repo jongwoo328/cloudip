@@ -5,9 +5,7 @@ import (
 	"cloudip/util"
 	"errors"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"time"
 )
@@ -43,24 +41,14 @@ func (ipRange IpRangeDataAzure) IsEmpty() bool {
 }
 
 func (ipDataManagerAzure *IpDataManagerAzure) GetLastModifiedUpstream() (time.Time, error) {
-	resp, err := http.Head(ipDataManagerAzure.DataURI)
+	headers, err := util.GetHeadRequestHeader(ipDataManagerAzure.DataURI)
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error checking metadata file expiration"))
-		return time.Time{}, err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing response body"))
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		err := util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error checking metadata file expiration")
+		err = util.ErrorWithInfo(err, "Error getting header from request")
 		util.PrintErrorTrace(err)
 		return time.Time{}, err
 	}
 
-	lastModified := resp.Header.Get("Last-Modified")
+	lastModified := headers.Get("Last-Modified")
 	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
 	if err != nil {
 		err := util.ErrorWithInfo(err, "Error parsing Date header")
@@ -71,37 +59,23 @@ func (ipDataManagerAzure *IpDataManagerAzure) GetLastModifiedUpstream() (time.Ti
 	return lastModifiedDate, nil
 }
 
-func (ipDataManagerAzure *IpDataManagerAzure) DownloadData() error {
+func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 	common.VerboseOutput("Downloading Azure IP ranges...")
 	if ipDataManagerAzure.DataURI == "" {
 		return errors.New("cannot get DataURI")
 	}
-	resp, err := http.Get(ipDataManagerAzure.DataURI)
+	err := util.DownloadFromUrlToFile(ipDataManagerAzure.DataURI, ipDataManagerAzure.DataFilePath)
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error downloading data file"))
 		return err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		err := util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error downloading data file")
-		util.PrintErrorTrace(err)
-		return err
-	}
-	dataFile, err := os.OpenFile(ipDataManagerAzure.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	headers, err := util.GetHeadRequestHeader(ipDataManagerAzure.DataURI)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error opening data file")
+		err = util.ErrorWithInfo(err, "Error getting header from request")
 		util.PrintErrorTrace(err)
 		return err
 	}
-
-	_, err = io.Copy(dataFile, resp.Body)
-	if err != nil {
-		err = util.ErrorWithInfo(err, "Error saving data file")
-		util.PrintErrorTrace(err)
-		return err
-	}
-
-	currentLastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
+	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
 	if err != nil {
 		err = util.ErrorWithInfo(err, "Error parsing Date header")
 		util.PrintErrorTrace(err)
@@ -122,27 +96,18 @@ func (ipDataManagerAzure *IpDataManagerAzure) DownloadData() error {
 
 	}
 
-	defer func() {
-		if networkCloseEre := resp.Body.Close(); networkCloseEre != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(networkCloseEre, "Error closing response body"))
-		}
-		if fileCloseErr := dataFile.Close(); fileCloseErr != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(fileCloseErr, "Error closing data file"))
-		}
-	}()
-
 	return nil
 }
 
 func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 	if !util.IsFileExists(DataFilePathAzure) {
 		common.VerboseOutput("Azure IP ranged file not exists.")
-		err := ipDataManagerAzure.DownloadData()
+		err := ipDataManagerAzure.downloadData()
 		return err
 	}
 	if isExpired() {
 		common.VerboseOutput("Azure IP ranged are outdated. Updating to the latest version...")
-		err := ipDataManagerAzure.DownloadData()
+		err := ipDataManagerAzure.downloadData()
 		return err
 	}
 	common.VerboseOutput("Azure IP ranged are up-to-date.")
