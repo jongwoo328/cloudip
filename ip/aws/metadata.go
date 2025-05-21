@@ -4,8 +4,8 @@ import (
 	"cloudip/common"
 	"cloudip/util"
 	"fmt"
-	"io"
-	"os"
+	// "io" // No longer used
+	// "os" // No longer used
 )
 
 var metadataManager = &common.MetadataManager{
@@ -14,87 +14,32 @@ var metadataManager = &common.MetadataManager{
 		Type:         common.AWS,
 		LastModified: 0,
 	},
+	// Add a SaveFunc that uses the generic WriteMetadata
+	SaveFunc: func(filePath string, data *common.CloudMetadata) error {
+		return common.WriteMetadata(filePath, data)
+	},
 }
 
 func init() {
-	err := ensureMetadataFile()
+	initialMeta := &common.CloudMetadata{Type: common.AWS, LastModified: 0}
+	err := common.EnsureMetadataFile(MetadataFilePathAws, ProviderDirectory, common.AWS, initialMeta)
 	if err != nil {
+		// EnsureMetadataFile already wraps errors, but PrintErrorTrace is good for top-level logging in init
+		util.PrintErrorTrace(fmt.Errorf("Error ensuring AWS metadata file during init: %w", err))
 		return
 	}
 
-	err = readMetadata()
+	err = common.ReadMetadata(MetadataFilePathAws, metadataManager.Metadata)
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error reading metadata"))
+		// ReadMetadata also wraps errors
+		util.PrintErrorTrace(fmt.Errorf("Error reading AWS metadata during init: %w", err))
 		return
 	}
 }
 
-func ensureMetadataFile() error {
-	if !util.IsFileExists(metadataManager.MetadataFilePath) {
-		common.VerboseOutput(fmt.Sprintf("Creating %s ...", ProviderDirectory))
-		if err := os.MkdirAll(ProviderDirectory, 0755); err != nil {
-			return util.ErrorWithInfo(err, "Error creating aws directory")
-		}
-		metadataFile, err := os.Create(metadataManager.MetadataFilePath)
-		if err != nil {
-			return util.ErrorWithInfo(err, "Error creating metadata file")
-		}
-		defer func() {
-			if err := metadataFile.Close(); err != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing metadata file"))
-			}
-		}()
-		err = writeMetadata(&common.CloudMetadata{
-			Type:         common.AWS,
-			LastModified: 0,
-		})
-		if err != nil {
-			return util.ErrorWithInfo(err, "Error writing metadata")
-		}
-	}
-
-	return nil
-}
-
-func readMetadata() error {
-	metadataFile, err := os.Open(metadataManager.MetadataFilePath)
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error opening metadata file"))
-		return err
-	}
-	defer func() {
-		if err := metadataFile.Close(); err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing metadata file"))
-		}
-	}()
-	err = util.HandleJSON(metadataFile, metadataManager.Metadata, "read")
-	if err != nil {
-		err = util.ErrorWithInfo(err, "Error reading metadata file")
-		return err
-	}
-	return nil
-}
-
-func writeMetadata(metadata *common.CloudMetadata) error {
-	metadataFile, err := os.OpenFile(metadataManager.MetadataFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return util.ErrorWithInfo(err, "Error opening metadata file")
-	}
-	defer func() {
-		if err := metadataFile.Close(); err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error closing metadata file"))
-		}
-	}()
-	if _, err := metadataFile.Seek(0, io.SeekStart); err != nil {
-		return util.ErrorWithInfo(err, "Error seeking metadata file")
-	}
-	err = util.HandleJSON(metadataFile, metadata, "write")
-	if err != nil {
-		return err
-	}
-	err = readMetadata()
-	return err
-}
+// ensureMetadataFile, readMetadata, and writeMetadata are removed,
+// their functionality is replaced by common.EnsureMetadataFile,
+// common.ReadMetadata, and common.WriteMetadata respectively.
 
 func isExpired() bool {
 	lastModifiedDate, err := ipDataManagerAws.GetLastModifiedUpstream()
