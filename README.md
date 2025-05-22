@@ -2,18 +2,32 @@
 
 [English](./README.md) | [한국어](./docs/README_ko.md)
 
-`cloudip` is a CLI tool that identifies cloud provider manages the given IP address. You can input a single or multiple IPs, and the results can be displayed in various formats, such as table, json.
+`cloudip` is a CLI tool that identifies which cloud provider manages the given IP address. You can input a single or multiple IPs, and the results can be displayed in various formats, such as table, json.
 
 **🚨 Warning 🚨**
 
 This project is currently under development, and features and options may change without notice until the official release. 
 
+## Table of Contents
+- [Features](#features)
+- [Currently Supported Cloud Providers](#currently-supported-cloud-providers)
+- [Installation](#installation)
+  - [Arch Linux](#arch-linux)
+  - [Binary Download](#binary-download)
+- [Usage](#usage)
+  - [Basic Usage](#basic-usage)
+  - [Output Options](#output-options)
+    - [Custom Delimiters](#custom-delimiters)
+    - [Output Formats](#output-formats)
+  - [Other Options](#other-options)
+- [Build from Source](#build-from-source)
+- [License](#license)
 
 ## Features
 - **Single IP Check**: Identify which cloud provider owns a specific IP.
 - **Multiple IP Check**: Check multiple IP addresses at once.
 - **IPv4 and IPv6 Support**: Supports both IPv4 and IPv6 addresses.
-- **Format Output**: Display results in a formatted with the `--format` option.
+- **Format Output**: Display results in various formats using the `--format` option.
 
 ### Currently Supported Cloud Providers
 - **AWS**: Amazon Web Services
@@ -40,151 +54,124 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
 
 
 ## Usage
-### Version Check
-```shell
-cloudip version
-```
-Output:
-```
-0.6.0
-```
 
-### Single IP Check
-```shell
-cloudip 54.230.176.25
-```
-Output:
-```
-54.230.176.25 aws
-```
+### Basic Usage
+- Version Check
+  ```shell
+  cloudip version
+  ```
+  Output:
+  ```text
+  0.6.0
+  ```
 
-### Multiple IP Check
-```shell
-cloudip 54.230.176.25 54.230.176.30 54.230.176.45
-```
-Output:
-```
-54.230.176.25 aws
-54.230.176.30 aws
-54.230.176.45 aws
-```
+- Single IP Check
+  ```shell
+  cloudip 54.230.176.25
+  ```
+  Output:
+  ```text
+  54.230.176.25 aws
+  ```
 
-### Custom Delimiters
-You can specify a custom delimiter for the output. The default delimiter is a space.
-#### Comma (,) Delimited
-```shell
-cloudip 54.230.176.25 --delimiter=','
-```
-Output:
-```
-54.230.176.25,aws
-```
+- Multiple IP Check
+  ```shell
+  cloudip 54.230.176.25 54.230.176.30 54.230.176.45
+  ```
+  Output:
+  ```text
+  54.230.176.25 aws
+  54.230.176.30 aws
+  54.230.176.45 aws
+  ```
 
-#### Tab (\t) Delimited
-```shell
-cloudip 54.230.176.25 --delimiter=$'\t'
-```
-Output:
-```
-54.230.176.25   aws
-```
-and any other custom delimiters can be used.
+### Output Options
+- #### Custom Delimiters
+  You can specify a custom delimiter for the output. The default delimiter is a space.
+  - Comma (,) Delimited
+    ```shell
+    cloudip 54.230.176.25 --delimiter=','
+    ```
+    Output:
+    ```text
+    54.230.176.25,aws
+    ```
 
-### Output Formats
-The output format can be specified using the `--format` option. The following formats are supported:
-- `text` (default)
-- `table`
-- `json`
+  - Tab (\t) Delimited
+    ```shell
+    cloudip 54.230.176.25 --delimiter=$'\t'
+    ```
+    Output:
+    ```text
+    54.230.176.25   aws
+    ```
+  and any other custom delimiters can be used.
 
-#### text
-Text is the default output format.
-```shell
-cloudip 54.230.176.25
-```
-```shell
-cloudip 54.230.176.25 --format=text
-```
-Output:
-```
-54.230.176.25 aws
-```
-Use `--header` option to display the header.
-```shell
-cloudip 54.230.176.25 --header
-```
-Output:
-```
-IP Provider
-54.230.176.25 aws
-```
+- #### Output Formats
+  Use the `--format` option to specify the output format. Supported formats include:
 
-#### table
-```shell
-cloudip 54.230.176.25 --format=table
-```
-Output:
-```
-54.230.176.25   aws
-```
-`--header` option can be used with the table format.
-```shell
-cloudip 54.230.176.25 --format=table --header
-```
-Output:
-```
-IP              PROVIDER 
-54.230.176.25   aws
-```
+  - `text` (default): Displays results as simple text.
+    ```shell
+    cloudip 54.230.176.25 --format=text
+    ```
+    Output:
+    ```text
+    54.230.176.25 aws
+    ```
+    Use the `--header` option to include a header row.
+    ```shell
+    cloudip 54.230.176.25 --format=text --header
+    ```
+    Output:
+    ```text
+    IP Provider
+    54.230.176.25 aws
+    ```
 
-#### json
-```shell
-cloudip 54.230.176.25 --format=json
-```
-Output:
-```json
-[{"IP":"54.230.176.25","Provider":"aws"}]
-```
-You can use with `jq` to format the JSON output.
-```shell
-cloudip 54.230.176.25 --format=json | jq
-```
-Output:
-```json
-[
-  {
-    "IP": "54.230.176.25",
-    "Provider": "aws"
-  }
-]
-```
+  - `table`: Displays results in a table format.
+    ```shell
+    cloudip 54.230.176.25 --format=table --header
+    ```
+    Output:
+    ```text
+    IP              PROVIDER 
+    54.230.176.25   aws
+    ```
 
-#### csv
-csv format is not supported `--format` option.
+  - `json`: Outputs results in JSON format, suitable for parsing with tools like `jq`.
+    ```shell
+    cloudip 54.230.176.25 --format=json
+    ```
+    Output:
+    ```json
+    [{"IP":"54.230.176.25","Provider":"aws"}]
+    ```
 
-You can get output in CSV format using `--format=text` and `--delimiter=','` options. 
-If you want to get result with header, use `--header` option.
- 
-```shell
-cloudip 54.230.176.25 --format=text --delimiter=',' --header
-```
-Output:
-```
-IP,Provider
-54.230.176.25,aws
-```
+  - `csv`: This tool does not have a direct `--format=csv` option. 
+    However, you can produce CSV-like output by combining `--format=text` with `--delimiter=','`.
+    To include a header row, also add the `--header` option.
+    ```shell
+    cloudip 54.230.176.25 --format=text --delimiter=',' --header
+    ```
+    Output:
+    ```csv
+    IP,Provider
+    54.230.176.25,aws
+    ```
 
-### Verbose Output
-You can use the `--verbose`, `-v` option to display detailed information.
-```shell
-cloudip --verbose 54.230.176.25
-```
-Output:
-```
-AWS IP ranges file not exists.
-Downloading AWS IP ranges...
-AWS IP ranges updated [2024-12-27 04:12:30]
-54.230.176.25 aws
-```
+### Other Options
+- Verbose Output
+  You can use the `--verbose`, `-v` option to display detailed information.
+  ```shell
+  cloudip --verbose 54.230.176.25
+  ```
+  Output:
+  ```text
+  AWS IP ranges file not exists.
+  Downloading AWS IP ranges...
+  AWS IP ranges updated [2024-12-27 04:12:30]
+  54.230.176.25 aws
+  ```
 
 
 ---
