@@ -1,18 +1,19 @@
 package azure
 
 import (
-	"cloudip/util"
+	"cloudip/util" // Keep for PrintErrorTrace and ErrorWithInfo in getDataUrl
 	"errors"
-	"fmt"
+	"fmt" // Keep for Errorf in getDataUrl
 	"github.com/PuerkitoBio/goquery"
+	"github.com/ip-api/cloudip/ip" // Added for ip.Get... functions
 	"net/http"
 	"sync"
 )
 
-var appDir = util.GetAppDir()
+// var appDir = util.GetAppDir() // Removed
 
-const DataFile = "azure.json"
-const MetadataFile = ".metadata.json"
+const DataFile = "azure.json" // Keep: specific to Azure
+// const MetadataFile = ".metadata.json" // Removed: ip.GetMetadataFilePath uses ip.DefaultMetadataFile
 
 var dataRequestOnce sync.Once
 var dataUrl string = "" // return empty string when error
@@ -62,6 +63,6 @@ func getDataUrl() string {
 	return dataUrl
 }
 
-var ProviderDirectory = fmt.Sprintf("%s/%s", appDir, "azure")
-var DataFilePathAzure = fmt.Sprintf("%s/%s", ProviderDirectory, DataFile)
-var MetadataFilePathAzure = fmt.Sprintf("%s/%s", ProviderDirectory, MetadataFile)
+var ProviderDirectory = ip.GetProviderDirectory("azure")
+var DataFilePathAzure = ip.GetDataFilePath("azure", DataFile)
+var MetadataFilePathAzure = ip.GetMetadataFilePath("azure")

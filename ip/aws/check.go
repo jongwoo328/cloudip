@@ -1,59 +1,44 @@
 package aws
 
 import (
-	"cloudip/util"
-	"fmt"
-	"net"
 	"sync"
+
+	"github.com/ip-api/cloudip/ip"
+	"github.com/ip-api/cloudip/util" // Keep for PrintErrorTrace, consider refactoring if not needed elsewhere
 )
 
-var v4Tree *util.CIDRTree
-var v6Tree *util.CIDRTree
-
-var initialized = false
-var initializeLock = sync.Mutex{}
+var awsChecker = ip.NewCloudIpChecker()
+var initOnceAws sync.Once
 
 func Initialize() {
-	if initialized {
-		return
-	}
+	initOnceAws.Do(func() {
+		err := ipDataManagerAws.EnsureDataFile()
+		if err != nil {
+			util.PrintErrorTrace(err) // Assuming PrintErrorTrace is still relevant
+			return
+		}
 
-	initializeLock.Lock()
-	defer initializeLock.Unlock()
+		awsIpRangeData := ipDataManagerAws.LoadIpData()
+		if awsIpRangeData == nil {
+			// Handle case where data loading fails, e.g. log an error
+			// For now, assume LoadIpData handles its errors or returns non-nil
+			return
+		}
 
-	v4Tree = util.NewCIDRTree()
-	v6Tree = util.NewCIDRTree()
+		var ipv4Ranges []string
+		for _, prefix := range awsIpRangeData.Prefixes {
+			ipv4Ranges = append(ipv4Ranges, prefix.IpPrefix)
+		}
 
-	err := ipDataManagerAws.EnsureDataFile()
-	if err != nil {
-		util.PrintErrorTrace(err)
-		return
-	}
+		var ipv6Ranges []string
+		for _, prefix := range awsIpRangeData.Ipv6Prefixes {
+			ipv6Ranges = append(ipv6Ranges, prefix.Ipv6Prefix)
+		}
 
-	awsIpRangeData := *ipDataManagerAws.LoadIpData()
-
-	for _, prefix := range awsIpRangeData.Prefixes {
-		v4Tree.AddCIDR(prefix.IpPrefix)
-	}
-
-	for _, prefix := range awsIpRangeData.Ipv6Prefixes {
-		v6Tree.AddCIDR(prefix.Ipv6Prefix)
-	}
-
-	initialized = true
+		awsChecker.Initialize(ipv4Ranges, ipv6Ranges)
+	})
 }
 
-func IsAwsIp(ip string) (bool, error) {
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
-		return false, fmt.Errorf("Error parsing IP: %s", ip)
-	}
-
-	if parsedIp.To4() != nil {
-		return v4Tree.Match(ip), nil
-	}
-	if parsedIp.To16() != nil {
-		return v6Tree.Match(ip), nil
-	}
-	return false, nil
+func IsAwsIp(ipAddr string) (bool, error) {
+	return awsChecker.IsCloudIp(ipAddr)
 }

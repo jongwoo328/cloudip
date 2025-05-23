@@ -1,67 +1,53 @@
 package azure
 
 import (
-	"cloudip/util"
-	"fmt"
-	"net"
 	"sync"
+	// "fmt" // No longer needed
+
+	"github.com/ip-api/cloudip/ip"
+	"github.com/ip-api/cloudip/util"
 )
 
-var v4Tree *util.CIDRTree
-var v6Tree *util.CIDRTree
-
-var initialized = false
-var initializeLock = sync.Mutex{}
+var azureChecker = ip.NewCloudIpChecker()
+var initOnceAzure sync.Once
 
 func Initialize() {
-	if initialized {
-		return
-	}
+	initOnceAzure.Do(func() {
+		err := ipDataManagerAzure.EnsureDataFile()
+		if err != nil {
+			util.PrintErrorTrace(err)
+			return
+		}
 
-	initializeLock.Lock()
-	defer initializeLock.Unlock()
+		azureIpRangeData := ipDataManagerAzure.LoadIpData()
+		if azureIpRangeData == nil {
+			// Handle case where data loading fails, e.g. log an error
+			return
+		}
 
-	v4Tree = util.NewCIDRTree()
-	v6Tree = util.NewCIDRTree()
+		var ipv4Ranges []string
+		var ipv6Ranges []string
 
-	err := ipDataManagerAzure.EnsureDataFile()
-	if err != nil {
-		util.PrintErrorTrace(err)
-		return
-	}
+		for _, dataObject := range azureIpRangeData.Values {
+			for _, prefix := range dataObject.Properties.AddressPrefixes {
+				cidrVersion, err := util.GetCIDRVersion(prefix)
+				if err != nil {
+					// Consider logging this error more formally if needed
+					util.PrintErrorTrace(util.ErrorWithInfo(err, "Error parsing Azure CIDR: "+prefix))
+					continue
+				}
 
-	azureIpRangeData := *ipDataManagerAzure.LoadIpData()
-
-	for _, dataObject := range azureIpRangeData.Values {
-		for _, prefix := range dataObject.Properties.AddressPrefixes {
-			cidrVersion, err := util.GetCIDRVersion(prefix)
-			if err != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(err, fmt.Sprintf("Error parsing CIDR: %s", prefix)))
-				continue
-			}
-
-			if cidrVersion == util.IPv4 {
-				v4Tree.AddCIDR(prefix)
-			} else {
-				v6Tree.AddCIDR(prefix)
+				if cidrVersion == util.IPv4 {
+					ipv4Ranges = append(ipv4Ranges, prefix)
+				} else if cidrVersion == util.IPv6 {
+					ipv6Ranges = append(ipv6Ranges, prefix)
+				}
 			}
 		}
-	}
-
-	initialized = true
+		azureChecker.Initialize(ipv4Ranges, ipv6Ranges)
+	})
 }
 
-func IsAzureIp(ip string) (bool, error) {
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
-		return false, fmt.Errorf("Error parsing IP: %s", ip)
-	}
-
-	if parsedIp.To4() != nil {
-		return v4Tree.Match(ip), nil
-	}
-	if parsedIp.To16() != nil {
-		return v6Tree.Match(ip), nil
-	}
-	return false, nil
+func IsAzureIp(ipAddr string) (bool, error) {
+	return azureChecker.IsCloudIp(ipAddr)
 }
