@@ -8,6 +8,20 @@
 
 이 프로젝트는 현재 개발 중에 있으며, 정식 릴리즈 전까지 기능과 옵션이 예고 없이 변경될 수 있습니다.
 
+## 목차
+- [주요 기능](#주요-기능)
+- [현재 지원되는 클라우드 제공자](#현재-지원되는-클라우드-제공자)
+- [설치](#설치)
+  - [Arch Linux](#arch-linux)
+  - [바이너리 다운로드](#바이너리-다운로드)
+- [사용 방법 (Usage)](#사용-방법-usage)
+  - [기본 사용법 (Basic Usage)](#기본-사용법-basic-usage)
+  - [출력 옵션 (Output Options)](#출력-옵션-output-options)
+    - [구분자 지정 (Delimiter Specification)](#구분자-지정-delimiter-specification)
+    - [출력 형식 (Output Formats)](#출력-형식-output-formats)
+  - [기타 옵션 (Other Options)](#기타-옵션-other-options)
+- [소스에서 빌드](#소스에서-빌드)
+- [라이선스](#라이선스)
 
 ## 주요 기능
 - **단일 IP 확인**: 특정 IP가 어떤 클라우드 제공자에 속해 있는지 확인합니다.
@@ -39,151 +53,123 @@ yay -S cloudip
 - macOS (ARM64)
 
 
-## 사용 방법
-### 버전 확인
-```shell
-cloudip version
-```
-출력:
-```
-0.6.0
-```
+## 사용 방법 (Usage)
 
-### 단일 IP 확인
-```shell
-cloudip 54.230.176.25
-```
-출력:
-```
-54.230.176.25 aws
-```
+### 기본 사용법 (Basic Usage)
+- 버전 확인 (Version Check)
+  ```shell
+  cloudip version
+  ```
+  출력:
+  ```text
+  0.6.0
+  ```
 
-### 다중 IP 확인
-```shell
-cloudip 54.230.176.25 54.230.176.30 54.230.176.45
-```
-출력:
-```
-54.230.176.25 aws
-54.230.176.30 aws
-54.230.176.45 aws
-```
+- 단일 IP 확인 (Single IP Check)
+  ```shell
+  cloudip 54.230.176.25
+  ```
+  출력:
+  ```text
+  54.230.176.25 aws
+  ```
 
-### 구분자 지정
-출력에 사용할 구분자를 지정할 수 있습니다. 기본 구분자는 공백입니다.
-#### 쉼표(,) 구분
-```shell
-cloudip 54.230.176.25 --delimiter=','
-```
-출력:
-```
-54.230.176.25,aws
-```
+- 다중 IP 확인 (Multiple IP Check)
+  ```shell
+  cloudip 54.230.176.25 54.230.176.30 54.230.176.45
+  ```
+  출력:
+  ```text
+  54.230.176.25 aws
+  54.230.176.30 aws
+  54.230.176.45 aws
+  ```
 
-#### 탭(\t) 구분
-```shell
-cloudip 54.230.176.25 --delimiter=$'\t'
-```
-출력:
-```
-54.230.176.25   aws
-```
-그리고 다른 사용자 정의 구분자도 사용할 수 있습니다.
+### 출력 옵션 (Output Options)
+- #### 구분자 지정 (Delimiter Specification)
+  출력에 사용할 구분자를 지정할 수 있습니다. 기본 구분자는 공백입니다.
+  - 쉼표(,) 구분 (Comma (,) Delimited)
+    ```shell
+    cloudip 54.230.176.25 --delimiter=','
+    ```
+    출력:
+    ```text
+    54.230.176.25,aws
+    ```
 
-### 출력 형식
-`--format` 옵션을 사용하여 출력 형식을 지정할 수 있습니다. 현재 지원되는 형식은 다음과 같습니다:
-- `text` (기본값)
-- `table`
-- `json`
+  - 탭(\t) 구분 (Tab (\t) Delimited)
+    ```shell
+    cloudip 54.230.176.25 --delimiter=$'\t'
+    ```
+    출력:
+    ```text
+    54.230.176.25   aws
+    ```
+  그리고 다른 사용자 정의 구분자도 사용할 수 있습니다.
 
-#### text
-텍스트는 기본 출력 형식입니다.
-```shell
-cloudip 54.230.176.25
-```
-```shell
-cloudip 54.230.176.25 --format=text
-```
-출력:
-```
-54.230.176.25 aws
-```
-`--header` 옵션을 사용하여 헤더를 출력할 수 있습니다.
-```shell
-cloudip 54.230.176.25 --header
-```
-출력:
-```
-IP Provider
-54.230.176.25 aws
-```
+- #### 출력 형식 (Output Formats)
+  `--format` 옵션으로 출력 형식을 지정합니다. 지원되는 형식은 다음과 같습니다:
+  - `text` (기본값): 간단한 텍스트로 결과를 표시합니다.
+    ```shell
+    cloudip 54.230.176.25 --format=text
+    ```
+    출력:
+    ```text
+    54.230.176.25 aws
+    ```
+    `--header` 옵션으로 헤더를 추가할 수 있습니다.
+    ```shell
+    cloudip 54.230.176.25 --format=text --header
+    ```
+    출력:
+    ```text
+    IP Provider
+    54.230.176.25 aws
+    ```
 
-#### table
-```shell
-cloudip 54.230.176.25 --format=table
-```
-출력:
-```
-54.230.176.25   aws
-```
-테이블 형식 출력에 `--header` 옵션을 사용할 수 있습니다.
-```shell
-cloudip 54.230.176.25 --format=table --header
-```
-출력:
-```
-IP              PROVIDER 
-54.230.176.25   aws
-```
+  - `table`: 표 형태로 정렬하여 결과를 표시합니다.
+    ```shell
+    cloudip 54.230.176.25 --format=table --header
+    ```
+    출력:
+    ```text
+    IP              PROVIDER 
+    54.230.176.25   aws
+    ```
 
-#### json
-```shell
-cloudip 54.230.176.25 --format=json
-```
-출력:
-```json
-[{"IP":"54.230.176.25","Provider":"aws"}]
-```
-`jq`를 사용하여 JSON 출력을 포맷팅할 수 있습니다.
-```shell
-cloudip 54.230.176.25 --format=json | jq
-```
-출력:
-```json
-[
-  {
-    "IP": "54.230.176.25",
-    "Provider": "aws"
-  }
-]
-```
+  - `json`: JSON 형식으로 결과를 출력합니다. `jq`와 같은 도구로 파싱하기 용이합니다.
+    ```shell
+    cloudip 54.230.176.25 --format=json
+    ```
+    출력:
+    ```json
+    [{"IP":"54.230.176.25","Provider":"aws"}]
+    ```
 
-#### csv
-csv 형식은 `--format` 옵션의 값으로 지원하지 않습니다.
+  - `csv`: CSV 형식은 `--format=csv` 옵션을 직접 지원하지 않습니다. 
+    대신, `--format=text` 와 `--delimiter=','` 옵션을 함께 사용하여 CSV와 유사한 형식으로 출력할 수 있습니다. 헤더를 포함하려면 `--header` 옵션을 추가합니다.
+    ```shell
+    cloudip 54.230.176.25 --format=text --delimiter=',' --header
+    ```
+    출력:
+    ```csv
+    IP,Provider
+    54.230.176.25,aws
+    ```
 
-대신 `--format=text`와 `--delimiter=','` 옵션을 사용하여 csv 형식으로 출력할 수 있습니다.
-헤더를 출력하려면 `--header` 옵션을 사용하세요.
-```shell
-cloudip 54.230.176.25 --format=text --delimiter=',' --header
-```
-출력:
-```
-IP,Provider
-54.230.176.25,aws
-```
-
-### 상세 출력
+### 기타 옵션 (Other Options)
+- 상세 출력 (Verbose Output)
 `--verbose` 또는 `-v` 옵션을 사용하여 상세한 출력을 확인할 수 있습니다.
-```shell
-cloudip --verbose 54.230.176.25
-```
-Output:
-```
-AWS IP ranges file not exists.
-Downloading AWS IP ranges...
-AWS IP ranges updated [2024-12-27 04:12:30]
-54.230.176.25 aws
-```
+  ```shell
+  cloudip --verbose 54.230.176.25
+  ```
+  출력:
+  ```text
+  AWS IP ranges file not exists.
+  Downloading AWS IP ranges...
+  AWS IP ranges updated [2024-12-27 04:12:30]
+  54.230.176.25 aws
+  ```
 
 ---
 
