@@ -11,7 +11,7 @@ const DataFile = "aws.json" // Keeping this as it's specific to AWS and used by 
 
 // MetadataFile constant is removed as ip.GetMetadataFilePath uses ip.DefaultMetadataFile
 
-func getDaraUrl() string {
+func getDataUrl() string {
 	return "https://ip-ranges.amazonaws.com/ip-ranges.json"
 }
 

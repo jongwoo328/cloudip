@@ -38,7 +38,7 @@ func ReadMetadata(metadataFilePath string, metadata *CloudMetadata) error {
 	}
 	defer file.Close()
 
-	err = util.HandleJSON(nil, json.NewDecoder(file).Decode(&metadata), "decode metadata from file: "+metadataFilePath)
+	err = util.HandleJSON(nil, json.NewDecoder(file).Decode(metadata), "decode metadata from file: "+metadataFilePath)
 	if err != nil {
 		return err // HandleJSON already wraps the error
 	}
