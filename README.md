@@ -178,14 +178,16 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
 
 ## Build from Source
 1. Ensure that Go is installed (Go v1.20 or later is recommended).
-2. Use the `make` command to build the project:
+2. Clone and build the project:
    ```shell
    git clone https://github.com/jongwoo328/cloudip.git
-   go mod tidy
    cd cloudip
-   go build -o dist --ldflags '-X cloudip/cmd.Version=0.6.0'
+   go mod tidy
+   go build -o cloudip --ldflags '-X cloudip/cmd.Version=0.6.0'
    ```
-3. The binary will be generated in the `build/` directory.
+3. The binary `cloudip` will be generated in the current directory.
+
+**Note for Maintainers**: For release builds, use `make build` which uses GoReleaser for cross-platform compilation and distribution.
 
 ---
 

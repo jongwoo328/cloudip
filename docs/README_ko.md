@@ -175,14 +175,16 @@ yay -S cloudip
 
 ## 소스에서 빌드
 1. Go가 설치되어 있는지 확인하세요 (Go v1.20 이상 권장).
-2. 다음 명령어를 사용하여 프로젝트를 빌드하세요:
+2. 프로젝트를 클론하고 빌드하세요:
    ```shell
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
-   go build -o dist --ldflags '-X cloudip/cmd.Version=0.6.0'
+   go build -o cloudip --ldflags '-X cloudip/cmd.Version=0.6.0'
    ```
-3. 빌드된 바이너리는 `build/` 디렉토리에 생성됩니다.
+3. 바이너리 `cloudip`가 현재 디렉토리에 생성됩니다.
+
+**메인테이너 참고사항**: 릴리즈 빌드의 경우 `make build` 명령어를 사용하세요. 이는 GoReleaser를 통해 크로스 플랫폼 컴파일 및 배포를 수행합니다.
 
 ---
 
