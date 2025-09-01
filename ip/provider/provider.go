@@ -46,11 +46,9 @@ func (bp *BaseProvider) CheckIP(ip string) (bool, error) {
 
 	if parsedIp.To4() != nil {
 		return bp.v4Tree.Match(ip), nil
-	}
-	if parsedIp.To16() != nil {
+	} else {
 		return bp.v6Tree.Match(ip), nil
 	}
-	return false, nil
 }
 
 func (bp *BaseProvider) Initialize() error {
