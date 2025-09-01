@@ -189,6 +189,25 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
 
 **Note for Maintainers**: For release builds, use `make build` which uses GoReleaser for cross-platform compilation and distribution.
 
+## Development and Testing
+
+### Testing
+Run the test suite using the following commands:
+
+```bash
+# Run all tests
+make test
+
+# Run tests with verbose output
+make test-verbose
+
+# Run tests with coverage report
+make test-coverage
+
+# Run benchmark tests
+make test-bench
+```
+
 ---
 
 ## License
