@@ -5,6 +5,7 @@ import (
 	"cloudip/ip/aws"
 	"cloudip/ip/azure"
 	"cloudip/ip/gcp"
+	"cloudip/ip/provider"
 )
 
 func CheckIp(ips *[]string) []common.CheckIpResult {
@@ -22,41 +23,41 @@ func CheckIp(ips *[]string) []common.CheckIpResult {
 	return results
 }
 
+var cloudProviders = map[common.CloudProvider]provider.CloudProvider{
+	common.AWS:   aws.Provider,
+	common.GCP:   gcp.Provider,
+	common.Azure: azure.Provider,
+}
+
 func checkCloudIp(ip string) (common.Result, error) {
 	result := common.Result{}
-	for _, provider := range Providers {
-		if provider == common.AWS {
-			aws.Initialize()
-			isAwsIp, err := aws.IsAwsIp(ip)
-			if err != nil {
-				return result, err
-			}
-			if isAwsIp {
-				result.Aws = isAwsIp
-				return result, nil
-			}
+
+	for _, providerType := range Providers {
+		provider, exists := cloudProviders[providerType]
+		if !exists {
+			continue
 		}
-		if provider == common.GCP {
-			gcp.Initialize()
-			isGcpIp, err := gcp.IsGcpIp(ip)
-			if err != nil {
-				return result, err
-			}
-			if isGcpIp {
-				result.Gcp = isGcpIp
-				return result, nil
-			}
+
+		err := provider.Initialize()
+		if err != nil {
+			return result, err
 		}
-		if provider == common.Azure {
-			azure.Initialize()
-			isAzureIp, err := azure.IsAzureIp(ip)
-			if err != nil {
-				return result, err
+
+		isMatch, err := provider.CheckIP(ip)
+		if err != nil {
+			return result, err
+		}
+
+		if isMatch {
+			switch providerType {
+			case common.AWS:
+				result.Aws = true
+			case common.GCP:
+				result.Gcp = true
+			case common.Azure:
+				result.Azure = true
 			}
-			if isAzureIp {
-				result.Azure = isAzureIp
-				return result, nil
-			}
+			return result, nil
 		}
 	}
 	return result, nil

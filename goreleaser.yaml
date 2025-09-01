@@ -24,7 +24,8 @@ snapshot:
   version_template: "{{.Major}}.{{.Minor}}.{{.Patch}}"
 
 archives:
-  - format: tar.gz
+  - formats:
+      - tar.gz
     name_template: "archives/{{.ProjectName}}_{{.Version}}_{{.Os}}_{{.Arch}}"
     files:
       - LICENSE
