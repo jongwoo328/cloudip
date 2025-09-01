@@ -43,8 +43,12 @@ func (ipDataManager *IpDataManagerAzure) GetDataURL() string {
 
 var Provider = NewAzureProvider()
 
-func Initialize() {
-	Provider.Initialize()
+func Initialize() error {
+	err := Provider.Initialize()
+	if err != nil {
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "Azure provider initialization failed"))
+	}
+	return err
 }
 
 func IsAzureIp(ip string) (bool, error) {

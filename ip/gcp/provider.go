@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"cloudip/ip/provider"
+	"cloudip/util"
 )
 
 type GCPProvider struct {
@@ -39,8 +40,12 @@ func (ipDataManager *IpDataManagerGcp) GetDataURL() string {
 
 var Provider = NewGCPProvider()
 
-func Initialize() {
-	Provider.Initialize()
+func Initialize() error {
+	err := Provider.Initialize()
+	if err != nil {
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "GCP provider initialization failed"))
+	}
+	return err
 }
 
 func IsGcpIp(ip string) (bool, error) {

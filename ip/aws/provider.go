@@ -2,6 +2,7 @@ package aws
 
 import (
 	"cloudip/ip/provider"
+	"cloudip/util"
 )
 
 type AWSProvider struct {
@@ -39,8 +40,12 @@ func (ipDataManager *IpDataManagerAws) GetDataURL() string {
 
 var Provider = NewAWSProvider()
 
-func Initialize() {
-	Provider.Initialize()
+func Initialize() error {
+	err := Provider.Initialize()
+	if err != nil {
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "AWS provider initialization failed"))
+	}
+	return err
 }
 
 func IsAwsIp(ip string) (bool, error) {
