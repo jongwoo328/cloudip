@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build and Development Commands
 
 - **Build**: `make build` (uses goreleaser for snapshot builds)
-- **Direct Go build**: `go build -o dist --ldflags '-X cloudip/cmd.Version=0.6.0'`
+- **Direct Go build**: `go build -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.6.0'`
 - **Test**: `go test ./...` (tests available in util/ package)
 - **Tidy dependencies**: `go mod tidy`
 - **Run locally**: `go run main.go [IP_ADDRESSES]`
