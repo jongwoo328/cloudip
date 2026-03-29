@@ -183,9 +183,9 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
-   go build -o cloudip --ldflags '-X cloudip/cmd.Version=0.6.0'
+   go build -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.6.0'
    ```
-3. The binary `cloudip` will be generated in the current directory.
+3. The binary `cloudip` will be generated in the `build/` directory.
 
 **Note for Maintainers**: For release builds, use `make build` which uses GoReleaser for cross-platform compilation and distribution.
 
