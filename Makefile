@@ -13,4 +13,10 @@ test-coverage:
 test-bench:
 	go test -bench=. ./...
 
-.PHONY: build test test-verbose test-coverage test-bench
+release:
+	goreleaser release --clean
+
+clean:
+	rm -rf dist/
+
+.PHONY: build release clean test test-verbose test-coverage test-bench

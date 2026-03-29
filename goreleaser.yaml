@@ -34,3 +34,12 @@ archives:
 
 checksum:
   name_template: "checksums.txt"
+
+homebrew_casks:
+  - repository:
+      owner: jongwoo328
+      name: homebrew-cloudip
+    name: cloudip
+    homepage: "https://github.com/jongwoo328/cloudip"
+    description: "CLI tool that identifies which cloud provider owns a given IP address"
+    license: "Apache-2.0"
