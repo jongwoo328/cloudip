@@ -186,6 +186,25 @@ yay -S cloudip
 
 **메인테이너 참고사항**: 릴리즈 빌드의 경우 `make build` 명령어를 사용하세요. 이는 GoReleaser를 통해 크로스 플랫폼 컴파일 및 배포를 수행합니다.
 
+## 개발 및 테스트
+
+### 테스트
+다음 명령어를 사용하여 테스트를 실행할 수 있습니다:
+
+```bash
+# 모든 테스트 실행
+make test
+
+# 상세 출력으로 테스트 실행
+make test-verbose
+
+# 커버리지 보고서와 함께 테스트 실행
+make test-coverage
+
+# 벤치마크 테스트 실행
+make test-bench
+```
+
 ---
 
 ## 라이선스
