@@ -15,9 +15,8 @@ builds:
       - darwin_arm64
     ldflags:
       - "-X 'cloudip/cmd.Version={{.Version}}'"
-    binary: "{{.ProjectName}}_{{.Version}}_{{.Os}}_{{.Arch}}"
+    binary: cloudip
     main: ./
-    no_unique_dist_dir: true
 
 snapshot:
 #  use snapshot for production build and archiving
