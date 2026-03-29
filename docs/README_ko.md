@@ -62,7 +62,7 @@ yay -S cloudip
   ```
   출력:
   ```text
-  0.6.0
+  0.7.0
   ```
 
 - 단일 IP 확인 (Single IP Check)
@@ -180,7 +180,7 @@ yay -S cloudip
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
-   go build -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.6.0'
+   go build -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.7.0'
    ```
 3. 바이너리 `cloudip`가 `build/` 디렉토리에 생성됩니다.
 
