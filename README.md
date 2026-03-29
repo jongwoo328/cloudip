@@ -62,7 +62,7 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
   ```
   Output:
   ```text
-  0.6.0
+  0.7.0
   ```
 
 - Single IP Check
@@ -177,13 +177,13 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
 ---
 
 ## Build from Source
-1. Ensure that Go is installed (Go v1.20 or later is recommended).
+1. Ensure that Go is installed (Go v1.25 or later is needed).
 2. Clone and build the project:
    ```shell
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
-   go build -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.6.0'
+   go build -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.7.0'
    ```
 3. The binary `cloudip` will be generated in the `build/` directory.
 

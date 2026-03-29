@@ -174,7 +174,7 @@ yay -S cloudip
 ---
 
 ## 소스에서 빌드
-1. Go가 설치되어 있는지 확인하세요 (Go v1.20 이상 권장).
+1. Go가 설치되어 있는지 확인하세요 (Go v1.25 이상 필요).
 2. 프로젝트를 클론하고 빌드하세요:
    ```shell
    git clone https://github.com/jongwoo328/cloudip.git
