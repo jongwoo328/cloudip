@@ -35,6 +35,12 @@
 - Azure (Microsoft Azure)
 
 ## 설치
+### Homebrew
+```shell
+brew tap jongwoo328/cloudip
+brew install cloudip
+```
+
 ### Arch Linux
 [cloudip](https://aur.archlinux.org/packages/cloudip)은 AUR에서 패키지로 제공됩니다.
 AUR 도우미(e.g., `yay`)를 사용하여 설치할 수 있습니다:

@@ -35,6 +35,12 @@ This project is currently under development, and features and options may change
 - **Azure**: Microsoft Azure
 
 ## Installation
+### Homebrew
+```shell
+brew tap jongwoo328/cloudip
+brew install cloudip
+```
+
 ### Arch Linux
 [cloudip](https://aur.archlinux.org/packages/cloudip) is available as a package on the AUR.
 You can install it using an AUR helper (e.g., `yay`):
