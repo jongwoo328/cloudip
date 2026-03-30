@@ -35,11 +35,10 @@
 - Azure (Microsoft Azure)
 
 ## 설치
-### Homebrew
+### Homebrew (macOS 전용)
 ```shell
 brew tap jongwoo328/cloudip
 brew install cloudip
-xattr -d com.apple.quarantine $(which cloudip)  # macOS만 해당
 ```
 
 ### Arch Linux

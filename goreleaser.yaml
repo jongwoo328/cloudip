@@ -42,3 +42,7 @@ homebrew_casks:
     homepage: "https://github.com/jongwoo328/cloudip"
     description: "CLI tool that identifies which cloud provider owns a given IP address"
     license: "Apache-2.0"
+    hooks:
+      post:
+        install: |
+          system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/cloudip"]
