@@ -39,6 +39,7 @@ This project is currently under development, and features and options may change
 ```shell
 brew tap jongwoo328/cloudip
 brew install cloudip
+xattr -d com.apple.quarantine $(which cloudip)  # macOS only
 ```
 
 ### Arch Linux
