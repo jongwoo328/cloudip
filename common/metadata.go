@@ -50,7 +50,8 @@ func (m *MetadataManager) Write(metadata *CloudMetadata) error {
 	if err != nil {
 		return util.ErrorWithInfo(err, "Error writing metadata")
 	}
-	return m.Read()
+	*m.Metadata = *metadata
+	return nil
 }
 
 func (m *MetadataManager) IsExpired(upstreamLastModified time.Time) bool {
