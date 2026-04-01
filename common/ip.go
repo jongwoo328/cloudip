@@ -21,5 +21,6 @@ type CloudMetadata struct {
 
 type MetadataManager struct {
 	MetadataFilePath string
+	ProviderDir      string
 	Metadata         *CloudMetadata
 }

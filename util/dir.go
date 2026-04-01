@@ -1,14 +1,13 @@
 package util
 
 import (
-	"cloudip/common"
 	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
 )
 
-func GetAppDir() string {
+func GetAppDir(appName string) string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		PrintErrorTrace(ErrorWithInfo(err, "Cannot get home directory"))
@@ -17,18 +16,17 @@ func GetAppDir() string {
 
 	switch runtime.GOOS {
 	case "darwin":
-		return filepath.Join(home, "Library", "Application Support", common.AppName)
+		return filepath.Join(home, "Library", "Application Support", appName)
 	case "linux":
-		return filepath.Join(home, "."+common.AppName)
+		return filepath.Join(home, "."+appName)
 	}
 	PrintErrorTrace(errors.New("unsupported OS"))
 	os.Exit(1)
 	return ""
 }
 
-func EnsureAppDir() {
-	// Create the application directory if it doesn't exist
-	appDir := GetAppDir()
+func EnsureAppDir(appName string) {
+	appDir := GetAppDir(appName)
 	ensureDir(appDir)
 }
 

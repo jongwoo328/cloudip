@@ -1,6 +1,7 @@
 package azure
 
 import (
+	"cloudip/common"
 	"cloudip/util"
 	"errors"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"sync"
 )
 
-var appDir = util.GetAppDir()
+var appDir = util.GetAppDir(common.AppName)
 
 const DataFile = "azure.json"
 const MetadataFile = ".metadata.json"

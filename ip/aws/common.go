@@ -1,11 +1,12 @@
 package aws
 
 import (
+	"cloudip/common"
 	"cloudip/util"
 	"fmt"
 )
 
-var appDir = util.GetAppDir()
+var appDir = util.GetAppDir(common.AppName)
 
 const DataFile = "aws.json"
 const MetadataFile = ".metadata.json"

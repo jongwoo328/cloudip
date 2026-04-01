@@ -87,7 +87,7 @@ func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 			Type:         common.Azure,
 			LastModified: currentLastModified.Unix(),
 		}
-		if err := writeMetadata(&metadata); err != nil {
+		if err := metadataManager.Write(&metadata); err != nil {
 			err = util.ErrorWithInfo(err, "Error writing metadata")
 			util.PrintErrorTrace(err)
 			return err
