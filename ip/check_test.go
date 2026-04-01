@@ -75,11 +75,11 @@ func TestCheckCloudIp(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name           string
-		ip             string
-		mockProviders  map[common.CloudProvider]provider.CloudProvider
-		expectedResult common.Result
-		expectError    bool
+		name             string
+		ip               string
+		mockProviders    map[common.CloudProvider]provider.CloudProvider
+		expectedProvider common.CloudProvider
+		expectError      bool
 	}{
 		{
 			name: "AWS IP match",
@@ -87,8 +87,7 @@ func TestCheckCloudIp(t *testing.T) {
 			mockProviders: map[common.CloudProvider]provider.CloudProvider{
 				common.AWS: newMockProvider("AWS", true, false, false),
 			},
-			expectedResult: common.Result{Aws: true},
-			expectError:    false,
+			expectedProvider: common.AWS,
 		},
 		{
 			name: "GCP IP match",
@@ -97,8 +96,7 @@ func TestCheckCloudIp(t *testing.T) {
 				common.AWS: newMockProvider("AWS", false, false, false),
 				common.GCP: newMockProvider("GCP", true, false, false),
 			},
-			expectedResult: common.Result{Gcp: true},
-			expectError:    false,
+			expectedProvider: common.GCP,
 		},
 		{
 			name: "Azure IP match",
@@ -108,8 +106,7 @@ func TestCheckCloudIp(t *testing.T) {
 				common.GCP:   newMockProvider("GCP", false, false, false),
 				common.Azure: newMockProvider("Azure", true, false, false),
 			},
-			expectedResult: common.Result{Azure: true},
-			expectError:    false,
+			expectedProvider: common.Azure,
 		},
 		{
 			name: "No match found",
@@ -118,8 +115,7 @@ func TestCheckCloudIp(t *testing.T) {
 				common.AWS: newMockProvider("AWS", false, false, false),
 				common.GCP: newMockProvider("GCP", false, false, false),
 			},
-			expectedResult: common.Result{},
-			expectError:    false,
+			expectedProvider: "",
 		},
 		{
 			name: "Initialization error",
@@ -127,8 +123,7 @@ func TestCheckCloudIp(t *testing.T) {
 			mockProviders: map[common.CloudProvider]provider.CloudProvider{
 				common.AWS: newMockProvider("AWS", true, false, true),
 			},
-			expectedResult: common.Result{},
-			expectError:    true,
+			expectError: true,
 		},
 		{
 			name: "CheckIP error",
@@ -136,38 +131,30 @@ func TestCheckCloudIp(t *testing.T) {
 			mockProviders: map[common.CloudProvider]provider.CloudProvider{
 				common.AWS: newMockProvider("AWS", true, true, false),
 			},
-			expectedResult: common.Result{},
-			expectError:    true,
+			expectError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Replace global providers with mock
 			cloudProviders = tt.mockProviders
-			
+
 			result, err := checkCloudIp(tt.ip)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected error but got none")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 				return
 			}
-			
-			if result.Aws != tt.expectedResult.Aws {
-				t.Errorf("AWS result mismatch: got %v, expected %v", result.Aws, tt.expectedResult.Aws)
-			}
-			if result.Gcp != tt.expectedResult.Gcp {
-				t.Errorf("GCP result mismatch: got %v, expected %v", result.Gcp, tt.expectedResult.Gcp)
-			}
-			if result.Azure != tt.expectedResult.Azure {
-				t.Errorf("Azure result mismatch: got %v, expected %v", result.Azure, tt.expectedResult.Azure)
+
+			if result != tt.expectedProvider {
+				t.Errorf("Provider mismatch: got %q, expected %q", result, tt.expectedProvider)
 			}
 		})
 	}
@@ -242,21 +229,13 @@ func TestCheckIpWithProviderOrder(t *testing.T) {
 
 	ips := []string{"192.168.1.1"}
 	results := CheckIp(&ips)
-	
+
 	if len(results) != 1 {
 		t.Fatalf("Expected 1 result, got %d", len(results))
 	}
-	
-	result := results[0].Result
-	
+
 	// Should only match AWS (first in provider order)
-	if !result.Aws {
-		t.Error("Expected AWS to be true")
-	}
-	if result.Gcp {
-		t.Error("Expected GCP to be false")
-	}
-	if result.Azure {
-		t.Error("Expected Azure to be false")
+	if results[0].Provider != common.AWS {
+		t.Errorf("Expected AWS, got %q", results[0].Provider)
 	}
 }

@@ -8,17 +8,14 @@ import (
 	"os"
 )
 
-func getProviderFromResult(result common.Result) string {
-	if result.Aws {
-		return "aws"
+func getProviderString(r common.CheckIpResult) string {
+	if r.Error != nil {
+		return "ERROR"
 	}
-	if result.Gcp {
-		return "gcp"
+	if r.Provider == "" {
+		return "unknown"
 	}
-	if result.Azure {
-		return "azure"
-	}
-	return "unknown"
+	return string(r.Provider)
 }
 
 var headers = map[string]string{
@@ -43,13 +40,7 @@ func printResultAsText(results *[]common.CheckIpResult) {
 		fmt.Printf("%s%s%s\n", headers["IP"], common.Flags.Delimiter, headers["Provider"])
 	}
 	for _, r := range *results {
-		var provider string
-		if r.Error != nil {
-			provider = "ERROR"
-		} else {
-			provider = getProviderFromResult(r.Result)
-		}
-		fmt.Printf("%s%s%s\n", r.Ip, common.Flags.Delimiter, provider)
+		fmt.Printf("%s%s%s\n", r.Ip, common.Flags.Delimiter, getProviderString(r))
 	}
 }
 func printResultAsTable(results *[]common.CheckIpResult) {
@@ -69,13 +60,7 @@ func printResultAsTable(results *[]common.CheckIpResult) {
 
 	tableData := make([][]string, 0)
 	for _, r := range *results {
-		var provider string
-		if r.Error != nil {
-			provider = "ERROR"
-		} else {
-			provider = getProviderFromResult(r.Result)
-		}
-		tableData = append(tableData, []string{r.Ip, provider})
+		tableData = append(tableData, []string{r.Ip, getProviderString(r)})
 	}
 	table.AppendBulk(tableData)
 	table.Render()
@@ -86,7 +71,7 @@ func printResultAsJson(results *[]common.CheckIpResult) {
 	for _, r := range *results {
 		resultMap := map[string]string{
 			headers["IP"]:       r.Ip,
-			headers["Provider"]: getProviderFromResult(r.Result),
+			headers["Provider"]: getProviderString(r),
 		}
 		resultSlice = append(resultSlice, resultMap)
 	}
