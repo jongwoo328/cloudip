@@ -101,6 +101,13 @@ func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
 }
 
 func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
+	if err := metadataManager.Ensure(); err != nil {
+		return err
+	}
+	if err := metadataManager.Read(); err != nil {
+		return err
+	}
+
 	if !util.IsFileExists(DataFilePathAws) {
 		common.VerboseOutput("AWS IP ranges file not exists.")
 		// Download the AWS IP ranges file

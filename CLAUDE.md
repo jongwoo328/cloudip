@@ -7,4 +7,4 @@
 
 ## Architecture
 
-- **Provider initialization**: Each provider's data loading and metadata setup runs inside `BaseProvider.Initialize()`, not in `init()`. New providers must follow this pattern — `checkCloudIp()` calls `Initialize()` before each IP check, which guarantees setup.
+- **Provider initialization**: Providers have no `init()` — all setup (metadata, data loading, CIDR tree) happens lazily via `Initialize()`. Metadata is prepared in `EnsureDataFile()`, data loading in `loadFunc`. `checkCloudIp()` calls `Initialize()` before each IP check, which guarantees setup. New providers must follow this pattern.

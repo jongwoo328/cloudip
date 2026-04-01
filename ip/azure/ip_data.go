@@ -100,6 +100,13 @@ func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 }
 
 func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
+	if err := metadataManager.Ensure(); err != nil {
+		return err
+	}
+	if err := metadataManager.Read(); err != nil {
+		return err
+	}
+
 	if !util.IsFileExists(DataFilePathAzure) {
 		common.VerboseOutput("Azure IP ranged file not exists.")
 		err := ipDataManagerAzure.downloadData()

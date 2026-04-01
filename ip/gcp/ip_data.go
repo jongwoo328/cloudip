@@ -93,6 +93,13 @@ func (ipDataManagerGcp *IpDataManagerGcp) downloadData() error {
 }
 
 func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
+	if err := metadataManager.Ensure(); err != nil {
+		return err
+	}
+	if err := metadataManager.Read(); err != nil {
+		return err
+	}
+
 	if !util.IsFileExists(DataFilePathGcp) {
 		common.VerboseOutput("GCP IP ranges file not exists.")
 		err := ipDataManagerGcp.downloadData()
