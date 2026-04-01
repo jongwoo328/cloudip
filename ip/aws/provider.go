@@ -11,27 +11,20 @@ type AWSProvider struct {
 
 func NewAWSProvider() *AWSProvider {
 	return &AWSProvider{
-		BaseProvider: provider.NewBaseProvider("AWS", ipDataManagerAws),
+		BaseProvider: provider.NewBaseProvider("AWS", ipDataManagerAws, func(bp *provider.BaseProvider) error {
+			awsIpRangeData := *ipDataManagerAws.LoadIpData()
+
+			for _, prefix := range awsIpRangeData.Prefixes {
+				bp.AddIPv4Range(prefix.IpPrefix)
+			}
+
+			for _, prefix := range awsIpRangeData.Ipv6Prefixes {
+				bp.AddIPv6Range(prefix.Ipv6Prefix)
+			}
+
+			return nil
+		}),
 	}
-}
-
-func (aws *AWSProvider) Initialize() error {
-	err := aws.BaseProvider.Initialize()
-	if err != nil {
-		return err
-	}
-
-	awsIpRangeData := *ipDataManagerAws.LoadIpData()
-
-	for _, prefix := range awsIpRangeData.Prefixes {
-		aws.AddIPv4Range(prefix.IpPrefix)
-	}
-
-	for _, prefix := range awsIpRangeData.Ipv6Prefixes {
-		aws.AddIPv6Range(prefix.Ipv6Prefix)
-	}
-
-	return nil
 }
 
 func (ipDataManager *IpDataManagerAws) GetDataURL() string {

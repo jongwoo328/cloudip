@@ -25,7 +25,7 @@ func (m *mockDataManager) GetDataURL() string {
 
 func TestNewBaseProvider(t *testing.T) {
 	mockDM := &mockDataManager{dataURL: "http://example.com"}
-	bp := NewBaseProvider("TestProvider", mockDM)
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	if bp.name != "TestProvider" {
 		t.Errorf("Expected name 'TestProvider', got '%s'", bp.name)
@@ -42,7 +42,7 @@ func TestNewBaseProvider(t *testing.T) {
 
 func TestBaseProvider_GetName(t *testing.T) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("MyProvider", mockDM)
+	bp := NewBaseProvider("MyProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	if bp.GetName() != "MyProvider" {
 		t.Errorf("Expected name 'MyProvider', got '%s'", bp.GetName())
@@ -70,7 +70,7 @@ func TestBaseProvider_Initialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockDM := &mockDataManager{shouldError: tt.shouldError}
-			bp := NewBaseProvider("TestProvider", mockDM)
+			bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 			
 			err := bp.Initialize()
 			
@@ -105,7 +105,7 @@ func TestBaseProvider_Initialize(t *testing.T) {
 
 func TestBaseProvider_InitializeIdempotent(t *testing.T) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("TestProvider", mockDM)
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	// First initialization
 	err1 := bp.Initialize()
@@ -126,7 +126,7 @@ func TestBaseProvider_InitializeIdempotent(t *testing.T) {
 
 func TestBaseProvider_ConcurrentInitialize(t *testing.T) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("TestProvider", mockDM)
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	const numGoroutines = 10
 	var wg sync.WaitGroup
@@ -159,7 +159,7 @@ func TestBaseProvider_ConcurrentInitialize(t *testing.T) {
 
 func TestBaseProvider_CheckIP(t *testing.T) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("TestProvider", mockDM)
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	// Initialize the provider
 	err := bp.Initialize()
@@ -247,7 +247,7 @@ func TestBaseProvider_CheckIP(t *testing.T) {
 
 func TestBaseProvider_AddIPRanges(t *testing.T) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("TestProvider", mockDM)
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	err := bp.Initialize()
 	if err != nil {
@@ -277,7 +277,7 @@ func TestBaseProvider_AddIPRanges(t *testing.T) {
 
 func TestBaseProvider_AddCIDRRange(t *testing.T) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("TestProvider", mockDM)
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	err := bp.Initialize()
 	if err != nil {
@@ -347,7 +347,7 @@ func TestBaseProvider_AddCIDRRange(t *testing.T) {
 
 func TestBaseProvider_IPv4vsIPv6Separation(t *testing.T) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("TestProvider", mockDM)
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	err := bp.Initialize()
 	if err != nil {
@@ -387,9 +387,31 @@ func TestBaseProvider_IPv4vsIPv6Separation(t *testing.T) {
 	}
 }
 
+func BenchmarkBaseProvider_RepeatedInitialize(b *testing.B) {
+	mockDM := &mockDataManager{}
+	loadCount := 0
+	bp := NewBaseProvider("BenchProvider", mockDM, func(bp *BaseProvider) error {
+		loadCount++
+		for i := 0; i < 1000; i++ {
+			bp.AddIPv4Range(fmt.Sprintf("10.%d.%d.0/24", i/256, i%256))
+		}
+		return nil
+	})
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bp.Initialize()
+	}
+	b.StopTimer()
+
+	if loadCount != 1 {
+		b.Errorf("loadFunc called %d times, expected 1", loadCount)
+	}
+}
+
 func BenchmarkBaseProvider_CheckIP_IPv4(b *testing.B) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("BenchProvider", mockDM)
+	bp := NewBaseProvider("BenchProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	bp.Initialize()
 	
@@ -411,7 +433,7 @@ func BenchmarkBaseProvider_CheckIP_IPv4(b *testing.B) {
 
 func BenchmarkBaseProvider_CheckIP_IPv6(b *testing.B) {
 	mockDM := &mockDataManager{}
-	bp := NewBaseProvider("BenchProvider", mockDM)
+	bp := NewBaseProvider("BenchProvider", mockDM, func(bp *BaseProvider) error { return nil })
 	
 	bp.Initialize()
 	

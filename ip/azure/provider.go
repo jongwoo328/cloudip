@@ -12,29 +12,22 @@ type AzureProvider struct {
 
 func NewAzureProvider() *AzureProvider {
 	return &AzureProvider{
-		BaseProvider: provider.NewBaseProvider("Azure", ipDataManagerAzure),
-	}
-}
+		BaseProvider: provider.NewBaseProvider("Azure", ipDataManagerAzure, func(bp *provider.BaseProvider) error {
+			azureIpRangeData := *ipDataManagerAzure.LoadIpData()
 
-func (azure *AzureProvider) Initialize() error {
-	err := azure.BaseProvider.Initialize()
-	if err != nil {
-		return err
-	}
-
-	azureIpRangeData := *ipDataManagerAzure.LoadIpData()
-
-	for _, dataObject := range azureIpRangeData.Values {
-		for _, prefix := range dataObject.Properties.AddressPrefixes {
-			err := azure.AddCIDRRange(prefix)
-			if err != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(err, fmt.Sprintf("Error parsing CIDR: %s", prefix)))
-				continue
+			for _, dataObject := range azureIpRangeData.Values {
+				for _, prefix := range dataObject.Properties.AddressPrefixes {
+					err := bp.AddCIDRRange(prefix)
+					if err != nil {
+						util.PrintErrorTrace(util.ErrorWithInfo(err, fmt.Sprintf("Error parsing CIDR: %s", prefix)))
+						continue
+					}
+				}
 			}
-		}
-	}
 
-	return nil
+			return nil
+		}),
+	}
 }
 
 func (ipDataManager *IpDataManagerAzure) GetDataURL() string {
