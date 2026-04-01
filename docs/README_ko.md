@@ -42,6 +42,8 @@ brew install cloudip
 ```
 
 ### Arch Linux
+> **참고**: AUR 패키지는 더 이상 관리되지 않습니다.
+
 [cloudip](https://aur.archlinux.org/packages/cloudip)은 AUR에서 패키지로 제공됩니다.
 AUR 도우미(e.g., `yay`)를 사용하여 설치할 수 있습니다:
 ```shell

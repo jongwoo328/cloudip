@@ -42,6 +42,8 @@ brew install cloudip
 ```
 
 ### Arch Linux
+> **Note**: The AUR package is no longer maintained.
+
 [cloudip](https://aur.archlinux.org/packages/cloudip) is available as a package on the AUR.
 You can install it using an AUR helper (e.g., `yay`):
 ```shell
