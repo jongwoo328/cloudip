@@ -25,12 +25,14 @@ type BaseProvider struct {
 	initialized bool
 	initLock    sync.Mutex
 	dataManager DataManager
+	loadFunc    func(*BaseProvider) error
 }
 
-func NewBaseProvider(name string, dataManager DataManager) *BaseProvider {
+func NewBaseProvider(name string, dataManager DataManager, loadFunc func(*BaseProvider) error) *BaseProvider {
 	return &BaseProvider{
 		name:        name,
 		dataManager: dataManager,
+		loadFunc:    loadFunc,
 	}
 }
 
@@ -71,10 +73,10 @@ func (bp *BaseProvider) Initialize() error {
 		return err
 	}
 
-	return bp.loadData()
-}
+	if err := bp.loadFunc(bp); err != nil {
+		return err
+	}
 
-func (bp *BaseProvider) loadData() error {
 	bp.initialized = true
 	return nil
 }
