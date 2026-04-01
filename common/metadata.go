@@ -13,13 +13,8 @@ func (m *MetadataManager) Ensure() error {
 		if err := os.MkdirAll(m.ProviderDir, 0755); err != nil {
 			return util.ErrorWithInfo(err, "Error creating provider directory")
 		}
-		metadataFile, err := os.Create(m.MetadataFilePath)
-		if err != nil {
-			return util.ErrorWithInfo(err, "Error creating metadata file")
-		}
-		defer metadataFile.Close()
 
-		err = m.Write(&CloudMetadata{
+		err := m.Write(&CloudMetadata{
 			Type:         m.Metadata.Type,
 			LastModified: 0,
 		})
