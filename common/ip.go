@@ -1,15 +1,9 @@
 package common
 
 type CheckIpResult struct {
-	Ip     string
-	Result Result
-	Error  error
-}
-
-type Result struct {
-	Aws   bool
-	Gcp   bool
-	Azure bool
+	Ip       string
+	Provider CloudProvider
+	Error    error
 }
 
 const (

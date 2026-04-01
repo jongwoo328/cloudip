@@ -12,11 +12,11 @@ func CheckIp(ips *[]string) []common.CheckIpResult {
 	results := make([]common.CheckIpResult, len(*ips))
 
 	for index, ip := range *ips {
-		checkResult, err := checkCloudIp(ip)
+		provider, err := checkCloudIp(ip)
 		results[index] = common.CheckIpResult{
-			Ip:     ip,
-			Result: checkResult,
-			Error:  err,
+			Ip:       ip,
+			Provider: provider,
+			Error:    err,
 		}
 	}
 
@@ -29,36 +29,26 @@ var cloudProviders = map[common.CloudProvider]provider.CloudProvider{
 	common.Azure: azure.Provider,
 }
 
-func checkCloudIp(ip string) (common.Result, error) {
-	result := common.Result{}
-
+func checkCloudIp(ip string) (common.CloudProvider, error) {
 	for _, providerType := range Providers {
-		provider, exists := cloudProviders[providerType]
+		p, exists := cloudProviders[providerType]
 		if !exists {
 			continue
 		}
 
-		err := provider.Initialize()
+		err := p.Initialize()
 		if err != nil {
-			return result, err
+			return "", err
 		}
 
-		isMatch, err := provider.CheckIP(ip)
+		isMatch, err := p.CheckIP(ip)
 		if err != nil {
-			return result, err
+			return "", err
 		}
 
 		if isMatch {
-			switch providerType {
-			case common.AWS:
-				result.Aws = true
-			case common.GCP:
-				result.Gcp = true
-			case common.Azure:
-				result.Azure = true
-			}
-			return result, nil
+			return providerType, nil
 		}
 	}
-	return result, nil
+	return "", nil
 }
