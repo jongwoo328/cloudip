@@ -14,19 +14,6 @@ var metadataManager = &common.MetadataManager{
 	},
 }
 
-func init() {
-	err := metadataManager.Ensure()
-	if err != nil {
-		return
-	}
-
-	err = metadataManager.Read()
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error reading metadata"))
-		return
-	}
-}
-
 func isExpired() bool {
 	lastModifiedDate, err := ipDataManagerGcp.GetLastModifiedUpstream()
 	if err != nil {
