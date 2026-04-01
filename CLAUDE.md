@@ -2,8 +2,9 @@
 
 ## Build
 
-- **Version injection**: Binary version is set via ldflags at build time: `go build -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.7.4'`
+- **Version injection**: Binary version is set via ldflags at build time: `go build -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.7.5'`
 - **Release builds**: `make build` uses GoReleaser for cross-platform compilation
+- **Version bump**: Update version string in these locations: `CLAUDE.md`, `README.md`, `docs/README_ko.md`
 
 ## Architecture
 
