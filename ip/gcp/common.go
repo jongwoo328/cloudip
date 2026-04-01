@@ -1,11 +1,12 @@
 package gcp
 
 import (
+	"cloudip/common"
 	"cloudip/util"
 	"fmt"
 )
 
-var appDir = util.GetAppDir()
+var appDir = util.GetAppDir(common.AppName)
 
 const DataFile = "gcp.json"
 const MetadataFile = ".metadata.json"

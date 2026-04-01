@@ -78,10 +78,10 @@ func (ipDataManagerGcp *IpDataManagerGcp) downloadData() error {
 
 	if metadataManager.Metadata.LastModified != currentLastModified.Unix() {
 		metadata := common.CloudMetadata{
-			Type:         common.AWS,
+			Type:         common.GCP,
 			LastModified: currentLastModified.Unix(),
 		}
-		if err := writeMetadata(&metadata); err != nil {
+		if err := metadataManager.Write(&metadata); err != nil {
 			err = util.ErrorWithInfo(err, "Error writing metadata")
 			util.PrintErrorTrace(err)
 			return err
