@@ -1,9 +1,16 @@
 package util
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
+
+var headClient = &http.Client{
+	Timeout: 5 * time.Second,
+}
 
 func GetHeadRequestHeader(url string) (http.Header, error) {
-	resp, err := http.Head(url)
+	resp, err := headClient.Head(url)
 	if err != nil {
 		return nil, ErrorWithInfo(err, "Error getting head request header")
 	}

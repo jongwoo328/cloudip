@@ -5,10 +5,15 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 )
 
+var downloadClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
+
 func DownloadFromUrlToFile(url string, filePath string) error {
-	resp, err := http.Get(url)
+	resp, err := downloadClient.Get(url)
 	if err != nil {
 		PrintErrorTrace(ErrorWithInfo(err, "Error downloading data file"))
 		return err
