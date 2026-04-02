@@ -127,7 +127,7 @@ func (ipDataManagerGcp *IpDataManagerGcp) LoadIpData() *IpRangeDataGcp {
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
-	err = util.HandleJSON(ipDataFile, &gcpIpRangeData, "read")
+	err = util.ReadJSON(ipDataFile, &gcpIpRangeData)
 	if err != nil {
 		err = util.ErrorWithInfo(err, "Error reading data file")
 		util.PrintErrorTrace(err)

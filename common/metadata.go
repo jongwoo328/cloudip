@@ -32,7 +32,7 @@ func (m *MetadataManager) Read() error {
 	}
 	defer metadataFile.Close()
 
-	err = util.HandleJSON(metadataFile, m.Metadata, "read")
+	err = util.ReadJSON(metadataFile, m.Metadata)
 	if err != nil {
 		return util.ErrorWithInfo(err, "Error reading metadata file")
 	}
@@ -46,7 +46,7 @@ func (m *MetadataManager) Write(metadata *CloudMetadata) error {
 	}
 	defer metadataFile.Close()
 
-	err = util.HandleJSON(metadataFile, metadata, "write")
+	err = util.WriteJSON(metadataFile, metadata)
 	if err != nil {
 		return util.ErrorWithInfo(err, "Error writing metadata")
 	}
