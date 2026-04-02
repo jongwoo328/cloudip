@@ -137,7 +137,7 @@ func (ipDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
-	err = util.HandleJSON(ipDataFile, &awsIpRangeData, "read")
+	err = util.ReadJSON(ipDataFile, &awsIpRangeData)
 	if err != nil {
 		err = util.ErrorWithInfo(err, "Error reading data file")
 		util.PrintErrorTrace(err)
