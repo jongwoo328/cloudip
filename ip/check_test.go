@@ -197,7 +197,7 @@ func TestCheckIp(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := CheckIp(&tt.ips)
+			results := CheckIp(tt.ips)
 			
 			if len(results) != tt.expectedLen {
 				t.Errorf("Expected %d results, got %d", tt.expectedLen, len(results))
@@ -228,7 +228,7 @@ func TestCheckIpWithProviderOrder(t *testing.T) {
 	}
 
 	ips := []string{"192.168.1.1"}
-	results := CheckIp(&ips)
+	results := CheckIp(ips)
 
 	if len(results) != 1 {
 		t.Fatalf("Expected 1 result, got %d", len(results))

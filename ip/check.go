@@ -8,10 +8,10 @@ import (
 	"cloudip/ip/provider"
 )
 
-func CheckIp(ips *[]string) []common.CheckIpResult {
-	results := make([]common.CheckIpResult, len(*ips))
+func CheckIp(ips []string) []common.CheckIpResult {
+	results := make([]common.CheckIpResult, len(ips))
 
-	for index, ip := range *ips {
+	for index, ip := range ips {
 		provider, err := checkCloudIp(ip)
 		results[index] = common.CheckIpResult{
 			Ip:       ip,

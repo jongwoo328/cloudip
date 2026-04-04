@@ -17,7 +17,7 @@ var rootCmd = &cobra.Command{
 			fmt.Println(Version)
 			return
 		}
-		result := ip.CheckIp(&args)
+		result := ip.CheckIp(args)
 		printResult(&result)
 	},
 }
