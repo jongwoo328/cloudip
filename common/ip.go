@@ -1,6 +1,6 @@
 package common
 
-type CheckIpResult struct {
+type Result struct {
 	Ip       string
 	Provider CloudProvider
 	Error    error
