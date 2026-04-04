@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func getProviderString(r common.CheckIpResult) string {
+func getProviderString(r common.Result) string {
 	if r.Error != nil {
 		return "ERROR"
 	}
@@ -23,7 +23,7 @@ var headers = map[string]string{
 	"Provider": "Provider",
 }
 
-func printResult(results *[]common.CheckIpResult) {
+func printResult(results *[]common.Result) {
 	if common.Flags.Format == "text" {
 		printResultAsText(results)
 	} else if common.Flags.Format == "table" {
@@ -35,7 +35,7 @@ func printResult(results *[]common.CheckIpResult) {
 	}
 }
 
-func printResultAsText(results *[]common.CheckIpResult) {
+func printResultAsText(results *[]common.Result) {
 	if common.Flags.Header {
 		fmt.Printf("%s%s%s\n", headers["IP"], common.Flags.Delimiter, headers["Provider"])
 	}
@@ -43,7 +43,7 @@ func printResultAsText(results *[]common.CheckIpResult) {
 		fmt.Printf("%s%s%s\n", r.Ip, common.Flags.Delimiter, getProviderString(r))
 	}
 }
-func printResultAsTable(results *[]common.CheckIpResult) {
+func printResultAsTable(results *[]common.Result) {
 	table := tablewriter.NewWriter(os.Stdout)
 	if common.Flags.Header {
 		table.SetHeader([]string{headers["IP"], headers["Provider"]})
@@ -66,7 +66,7 @@ func printResultAsTable(results *[]common.CheckIpResult) {
 	table.Render()
 }
 
-func printResultAsJson(results *[]common.CheckIpResult) {
+func printResultAsJson(results *[]common.Result) {
 	resultSlice := make([]map[string]string, 0)
 	for _, r := range *results {
 		resultMap := map[string]string{

@@ -160,7 +160,7 @@ func TestCheckCloudIp(t *testing.T) {
 	}
 }
 
-func TestCheckIp(t *testing.T) {
+func TestCheck(t *testing.T) {
 	// Save original providers
 	originalProviders := cloudProviders
 	defer func() {
@@ -197,7 +197,7 @@ func TestCheckIp(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := CheckIp(&tt.ips)
+			results := Check(tt.ips)
 			
 			if len(results) != tt.expectedLen {
 				t.Errorf("Expected %d results, got %d", tt.expectedLen, len(results))
@@ -213,7 +213,7 @@ func TestCheckIp(t *testing.T) {
 	}
 }
 
-func TestCheckIpWithProviderOrder(t *testing.T) {
+func TestCheckWithProviderOrder(t *testing.T) {
 	// Save original providers
 	originalProviders := cloudProviders
 	defer func() {
@@ -228,7 +228,7 @@ func TestCheckIpWithProviderOrder(t *testing.T) {
 	}
 
 	ips := []string{"192.168.1.1"}
-	results := CheckIp(&ips)
+	results := Check(ips)
 
 	if len(results) != 1 {
 		t.Fatalf("Expected 1 result, got %d", len(results))
