@@ -11,7 +11,7 @@ var appDir = util.GetAppDir(common.AppName)
 const DataFile = "aws.json"
 const MetadataFile = ".metadata.json"
 
-func getDaraUrl() string {
+func getDataUrl() string {
 	return "https://ip-ranges.amazonaws.com/ip-ranges.json"
 }
 

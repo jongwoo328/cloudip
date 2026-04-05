@@ -149,7 +149,7 @@ func (ipDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
 }
 
 var ipDataManagerAws = &IpDataManagerAws{
-	DataURI:      getDaraUrl(),
+	DataURI:      getDataUrl(),
 	DataFile:     DataFile,
 	DataFilePath: DataFilePathAws,
 	IpRange:      IpRangeDataAws{},
