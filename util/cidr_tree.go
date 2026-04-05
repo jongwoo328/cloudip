@@ -49,7 +49,8 @@ func (tree *CIDRTree) Match(ip string) bool {
 		return false
 	}
 
-	binaryIP := ipToBinary(parsedIP, 128) // 128비트로 변환하되, CIDR 마스크 크기로 조절됨
+	// IPv6 full bit length; ipToBinary internally adjusts for IPv4
+	binaryIP := ipToBinary(parsedIP, net.IPv6len*8)
 
 	node := tree
 	for i := 0; i < len(binaryIP); i++ {
@@ -70,10 +71,10 @@ func (tree *CIDRTree) Match(ip string) bool {
 func ipToBinary(ip net.IP, maskSize int) []byte {
 	if ip.To4() != nil {
 		ip = ip.To4() // 32-bit for IPv4
-		maskSize = min(maskSize, 32)
+		maskSize = min(maskSize, net.IPv4len*8)
 	} else {
 		ip = ip.To16() // 128-bit for IPv6
-		maskSize = min(maskSize, 128)
+		maskSize = min(maskSize, net.IPv6len*8)
 	}
 
 	binary := make([]byte, 0, maskSize)
