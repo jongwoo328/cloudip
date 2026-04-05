@@ -5,7 +5,7 @@ import (
 )
 
 var Providers = []common.CloudProvider{
-	"aws",
-	"gcp",
-	"azure",
+	common.AWS,
+	common.GCP,
+	common.Azure,
 }
