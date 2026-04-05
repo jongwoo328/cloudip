@@ -49,7 +49,7 @@ func (tree *CIDRTree) Match(ip string) bool {
 		return false
 	}
 
-	// IPv6 full bit length; ipToBinary internally adjusts to 32 bits for IPv4
+	// IPv6 full bit length; ipToBinary internally adjusts for IPv4
 	binaryIP := ipToBinary(parsedIP, net.IPv6len*8)
 
 	node := tree
@@ -71,7 +71,7 @@ func (tree *CIDRTree) Match(ip string) bool {
 func ipToBinary(ip net.IP, maskSize int) []byte {
 	if ip.To4() != nil {
 		ip = ip.To4() // 32-bit for IPv4
-		maskSize = min(maskSize, 32)
+		maskSize = min(maskSize, net.IPv4len*8)
 	} else {
 		ip = ip.To16() // 128-bit for IPv6
 		maskSize = min(maskSize, net.IPv6len*8)
