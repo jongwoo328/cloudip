@@ -9,13 +9,13 @@ import (
 )
 
 type mockProvider struct {
-	name         string
-	shouldMatch  bool
-	shouldError  bool
-	initError    bool
-	initialized  bool
-	v4Tree       *util.CIDRTree
-	v6Tree       *util.CIDRTree
+	name        string
+	shouldMatch bool
+	shouldError bool
+	initError   bool
+	initialized bool
+	v4Tree      *util.CIDRTree
+	v6Tree      *util.CIDRTree
 }
 
 func newMockProvider(name string, shouldMatch, shouldError, initError bool) *mockProvider {
@@ -34,7 +34,7 @@ func (m *mockProvider) Initialize() error {
 		return errors.New("initialization failed")
 	}
 	m.initialized = true
-	
+
 	// Add some test CIDR ranges
 	if m.shouldMatch {
 		m.v4Tree.AddCIDR("192.168.1.0/24")
@@ -51,7 +51,7 @@ func (m *mockProvider) CheckIP(ip string) (bool, error) {
 	if !m.initialized {
 		return false, errors.New("provider not initialized")
 	}
-	
+
 	// Simple mock logic - just check if it should match
 	if m.shouldMatch {
 		// For testing purposes, match specific IPs
@@ -198,12 +198,12 @@ func TestCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			results := Check(tt.ips)
-			
+
 			if len(results) != tt.expectedLen {
 				t.Errorf("Expected %d results, got %d", tt.expectedLen, len(results))
 				return
 			}
-			
+
 			for i, result := range results {
 				if result.Ip != tt.ips[i] {
 					t.Errorf("IP mismatch at index %d: got %s, expected %s", i, result.Ip, tt.ips[i])

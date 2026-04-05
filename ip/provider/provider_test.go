@@ -26,15 +26,15 @@ func (m *mockDataManager) GetDataURL() string {
 func TestNewBaseProvider(t *testing.T) {
 	mockDM := &mockDataManager{dataURL: "http://example.com"}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	if bp.name != "TestProvider" {
 		t.Errorf("Expected name 'TestProvider', got '%s'", bp.name)
 	}
-	
+
 	if bp.dataManager != mockDM {
 		t.Error("DataManager not set correctly")
 	}
-	
+
 	if bp.initialized {
 		t.Error("Provider should not be initialized by default")
 	}
@@ -43,7 +43,7 @@ func TestNewBaseProvider(t *testing.T) {
 func TestBaseProvider_GetName(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("MyProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	if bp.GetName() != "MyProvider" {
 		t.Errorf("Expected name 'MyProvider', got '%s'", bp.GetName())
 	}
@@ -66,14 +66,14 @@ func TestBaseProvider_Initialize(t *testing.T) {
 			expectError: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockDM := &mockDataManager{shouldError: tt.shouldError}
 			bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
-			
+
 			err := bp.Initialize()
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -83,19 +83,19 @@ func TestBaseProvider_Initialize(t *testing.T) {
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
-			
+
 			if !bp.initialized {
 				t.Error("Provider should be initialized after successful Initialize()")
 			}
-			
+
 			if bp.v4Tree == nil {
 				t.Error("IPv4 tree should be initialized")
 			}
-			
+
 			if bp.v6Tree == nil {
 				t.Error("IPv6 tree should be initialized")
 			}
@@ -106,19 +106,19 @@ func TestBaseProvider_Initialize(t *testing.T) {
 func TestBaseProvider_InitializeIdempotent(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	// First initialization
 	err1 := bp.Initialize()
 	if err1 != nil {
 		t.Fatalf("First initialization failed: %v", err1)
 	}
-	
+
 	// Second initialization should not error and should be idempotent
 	err2 := bp.Initialize()
 	if err2 != nil {
 		t.Errorf("Second initialization failed: %v", err2)
 	}
-	
+
 	if !bp.initialized {
 		t.Error("Provider should remain initialized")
 	}
@@ -127,11 +127,11 @@ func TestBaseProvider_InitializeIdempotent(t *testing.T) {
 func TestBaseProvider_ConcurrentInitialize(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	const numGoroutines = 10
 	var wg sync.WaitGroup
 	errors := make(chan error, numGoroutines)
-	
+
 	// Launch multiple goroutines trying to initialize concurrently
 	for i := 0; i < numGoroutines; i++ {
 		wg.Add(1)
@@ -141,17 +141,17 @@ func TestBaseProvider_ConcurrentInitialize(t *testing.T) {
 			errors <- err
 		}()
 	}
-	
+
 	wg.Wait()
 	close(errors)
-	
+
 	// Check that all initializations succeeded
 	for err := range errors {
 		if err != nil {
 			t.Errorf("Concurrent initialization failed: %v", err)
 		}
 	}
-	
+
 	if !bp.initialized {
 		t.Error("Provider should be initialized after concurrent calls")
 	}
@@ -160,18 +160,18 @@ func TestBaseProvider_ConcurrentInitialize(t *testing.T) {
 func TestBaseProvider_CheckIP(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	// Initialize the provider
 	err := bp.Initialize()
 	if err != nil {
 		t.Fatalf("Failed to initialize provider: %v", err)
 	}
-	
+
 	// Add some test CIDR ranges
 	bp.AddIPv4Range("192.168.1.0/24")
 	bp.AddIPv4Range("10.0.0.0/8")
 	bp.AddIPv6Range("2001:db8::/32")
-	
+
 	tests := []struct {
 		name        string
 		ip          string
@@ -221,23 +221,23 @@ func TestBaseProvider_CheckIP(t *testing.T) {
 			expectError: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := bp.CheckIP(tt.ip)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("Expected error but got none")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 				return
 			}
-			
+
 			if result != tt.expected {
 				t.Errorf("Expected %v, got %v for IP %s", tt.expected, result, tt.ip)
 			}
@@ -248,12 +248,12 @@ func TestBaseProvider_CheckIP(t *testing.T) {
 func TestBaseProvider_AddIPRanges(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	err := bp.Initialize()
 	if err != nil {
 		t.Fatalf("Failed to initialize provider: %v", err)
 	}
-	
+
 	// Test AddIPv4Range
 	bp.AddIPv4Range("192.168.1.0/24")
 	match, err := bp.CheckIP("192.168.1.1")
@@ -263,7 +263,7 @@ func TestBaseProvider_AddIPRanges(t *testing.T) {
 	if !match {
 		t.Error("IPv4 range not added correctly")
 	}
-	
+
 	// Test AddIPv6Range
 	bp.AddIPv6Range("2001:db8::/32")
 	match, err = bp.CheckIP("2001:db8::1")
@@ -278,12 +278,12 @@ func TestBaseProvider_AddIPRanges(t *testing.T) {
 func TestBaseProvider_AddCIDRRange(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	err := bp.Initialize()
 	if err != nil {
 		t.Fatalf("Failed to initialize provider: %v", err)
 	}
-	
+
 	tests := []struct {
 		name        string
 		cidr        string
@@ -313,30 +313,30 @@ func TestBaseProvider_AddCIDRRange(t *testing.T) {
 			expectError: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := bp.AddCIDRRange(tt.cidr)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("Expected error but got none")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 				return
 			}
-			
+
 			if tt.testIP != "" {
 				match, err := bp.CheckIP(tt.testIP)
 				if err != nil {
 					t.Errorf("Unexpected error checking IP: %v", err)
 					return
 				}
-				
+
 				if match != tt.expected {
 					t.Errorf("Expected %v, got %v for IP %s", tt.expected, match, tt.testIP)
 				}
@@ -348,18 +348,18 @@ func TestBaseProvider_AddCIDRRange(t *testing.T) {
 func TestBaseProvider_IPv4vsIPv6Separation(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	err := bp.Initialize()
 	if err != nil {
 		t.Fatalf("Failed to initialize provider: %v", err)
 	}
-	
+
 	// Add IPv4 range
 	bp.AddIPv4Range("192.168.1.0/24")
-	
+
 	// Add IPv6 range
 	bp.AddIPv6Range("2001:db8::/32")
-	
+
 	// Test IPv4 doesn't match IPv6 tree and vice versa
 	v4Match, err := bp.CheckIP("192.168.1.1")
 	if err != nil {
@@ -368,7 +368,7 @@ func TestBaseProvider_IPv4vsIPv6Separation(t *testing.T) {
 	if !v4Match {
 		t.Error("IPv4 should match in IPv4 range")
 	}
-	
+
 	v6Match, err := bp.CheckIP("2001:db8::1")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -376,7 +376,7 @@ func TestBaseProvider_IPv4vsIPv6Separation(t *testing.T) {
 	if !v6Match {
 		t.Error("IPv6 should match in IPv6 range")
 	}
-	
+
 	// Test that IPv4 doesn't match different range
 	v4NoMatch, err := bp.CheckIP("10.1.1.1")
 	if err != nil {
@@ -412,16 +412,16 @@ func BenchmarkBaseProvider_RepeatedInitialize(b *testing.B) {
 func BenchmarkBaseProvider_CheckIP_IPv4(b *testing.B) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("BenchProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	bp.Initialize()
-	
+
 	// Add multiple IPv4 ranges
 	for i := 0; i < 100; i++ {
 		bp.AddIPv4Range(fmt.Sprintf("10.%d.0.0/24", i))
 	}
-	
+
 	testIP := "10.50.0.1"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := bp.CheckIP(testIP)
@@ -434,16 +434,16 @@ func BenchmarkBaseProvider_CheckIP_IPv4(b *testing.B) {
 func BenchmarkBaseProvider_CheckIP_IPv6(b *testing.B) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("BenchProvider", mockDM, func(bp *BaseProvider) error { return nil })
-	
+
 	bp.Initialize()
-	
+
 	// Add multiple IPv6 ranges
 	for i := 0; i < 100; i++ {
 		bp.AddIPv6Range(fmt.Sprintf("2001:db8:%x::/48", i))
 	}
-	
+
 	testIP := "2001:db8:32::1"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := bp.CheckIP(testIP)

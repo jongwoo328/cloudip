@@ -1,7 +1,7 @@
 package util
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -10,7 +10,7 @@ import (
 func GetAppDir(appName string) string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		PrintErrorTrace(ErrorWithInfo(err, "Cannot get home directory"))
+		PrintErrorTrace(ErrorWithInfo(err, "cannot get home directory"))
 		os.Exit(1)
 	}
 
@@ -20,7 +20,7 @@ func GetAppDir(appName string) string {
 	case "linux":
 		return filepath.Join(home, "."+appName)
 	}
-	PrintErrorTrace(errors.New("unsupported OS"))
+	PrintErrorTrace(fmt.Errorf("unsupported OS: %s", runtime.GOOS))
 	os.Exit(1)
 	return ""
 }

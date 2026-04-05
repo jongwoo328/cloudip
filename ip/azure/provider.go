@@ -19,7 +19,7 @@ func NewAzureProvider() *AzureProvider {
 				for _, prefix := range dataObject.Properties.AddressPrefixes {
 					err := bp.AddCIDRRange(prefix)
 					if err != nil {
-						util.PrintErrorTrace(util.ErrorWithInfo(err, fmt.Sprintf("Error parsing CIDR: %s", prefix)))
+						util.PrintErrorTrace(util.ErrorWithInfo(err, fmt.Sprintf("error parsing CIDR: %s", prefix)))
 						continue
 					}
 				}
@@ -35,15 +35,3 @@ func (ipDataManager *IpDataManagerAzure) GetDataURL() string {
 }
 
 var Provider = NewAzureProvider()
-
-func Initialize() error {
-	err := Provider.Initialize()
-	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Azure provider initialization failed"))
-	}
-	return err
-}
-
-func IsAzureIp(ip string) (bool, error) {
-	return Provider.CheckIP(ip)
-}

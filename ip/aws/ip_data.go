@@ -44,7 +44,7 @@ func (ipRange IpRangeDataAws) IsEmpty() bool {
 func (ipDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, error) {
 	headers, err := util.GetHeadRequestHeader(ipDataManagerAws.DataURI)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error getting header from request")
+		err = util.ErrorWithInfo(err, "error getting header from request")
 		util.PrintErrorTrace(err)
 		return time.Time{}, err
 	}
@@ -52,7 +52,7 @@ func (ipDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, 
 	lastModified := headers.Get("Last-Modified")
 	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
 	if err != nil {
-		err := util.ErrorWithInfo(err, "Error parsing Date header")
+		err := util.ErrorWithInfo(err, "error parsing Date header")
 		util.PrintErrorTrace(err)
 		return time.Time{}, err
 	}
@@ -73,13 +73,13 @@ func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
 
 	headers, err := util.GetHeadRequestHeader(ipDataManagerAws.DataURI)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error getting header from request")
+		err = util.ErrorWithInfo(err, "error getting header from request")
 		util.PrintErrorTrace(err)
 		return err
 	}
 	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error parsing Date header")
+		err = util.ErrorWithInfo(err, "error parsing Date header")
 		util.PrintErrorTrace(err)
 		return err
 	}
@@ -90,7 +90,7 @@ func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
 			LastModified: currentLastModified.Unix(),
 		}
 		if err := metadataManager.Write(&metadata); err != nil {
-			err = util.ErrorWithInfo(err, "Error writing metadata")
+			err = util.ErrorWithInfo(err, "error writing metadata")
 			util.PrintErrorTrace(err)
 			return err
 		}
@@ -133,13 +133,15 @@ func (ipDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
 	awsIpRangeData := IpRangeDataAws{}
 	ipDataFile, err := os.Open(ipDataManagerAws.DataFilePath)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error opening data file")
+		err = util.ErrorWithInfo(err, "error opening data file")
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
+	defer ipDataFile.Close()
+
 	err = util.ReadJSON(ipDataFile, &awsIpRangeData)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error reading data file")
+		err = util.ErrorWithInfo(err, "error reading data file")
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
@@ -149,7 +151,7 @@ func (ipDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
 }
 
 var ipDataManagerAws = &IpDataManagerAws{
-	DataURI:      getDaraUrl(),
+	DataURI:      getDataUrl(),
 	DataFile:     DataFile,
 	DataFilePath: DataFilePathAws,
 	IpRange:      IpRangeDataAws{},

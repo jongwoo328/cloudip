@@ -17,7 +17,7 @@ var metadataManager = &common.MetadataManager{
 func isExpired() bool {
 	lastModifiedDate, err := ipDataManagerGcp.GetLastModifiedUpstream()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error getting last modified time from GCP server"))
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting last modified time from GCP server"))
 		return false
 	}
 	return metadataManager.IsExpired(lastModifiedDate)
