@@ -134,6 +134,8 @@ func (ipDataManagerAzure *IpDataManagerAzure) LoadIpData() *IpRangeDataAzure {
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
+	defer ipDataFile.Close()
+
 	err = util.ReadJSON(ipDataFile, &azureIpRangeData)
 	if err != nil {
 		err = util.ErrorWithInfo(err, "error reading data file")

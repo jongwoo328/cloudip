@@ -26,18 +26,13 @@ func getDataUrl() string {
 			util.PrintErrorTrace(util.ErrorWithInfo(err, "error checking metadata file expiration"))
 			return
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			err := util.ErrorWithInfo(fmt.Errorf("received non-200 status code: %s", resp.Status), "error checking metadata file expiration")
 			util.PrintErrorTrace(err)
 			return
 		}
-
-		defer func() {
-			if networkCloseErr := resp.Body.Close(); networkCloseErr != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(networkCloseErr, "error closing response body"))
-			}
-		}()
 
 		document, err := goquery.NewDocumentFromReader(resp.Body)
 		if err != nil {
@@ -46,7 +41,7 @@ func getDataUrl() string {
 		}
 
 		downloadButton := document.Find(`section[aria-label="download action"] a`).First()
-		if downloadButton == nil {
+		if downloadButton.Length() == 0 {
 			util.PrintErrorTrace(util.ErrorWithInfo(errors.New("no download button found"), "error parsing html"))
 			return
 		}
