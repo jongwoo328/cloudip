@@ -23,37 +23,37 @@ func getDataUrl() string {
 
 		resp, err := http.Get("https://www.microsoft.com/en-us/download/details.aspx?id=56519")
 		if err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error checking metadata file expiration"))
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "error checking metadata file expiration"))
 			return
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			err := util.ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error checking metadata file expiration")
+			err := util.ErrorWithInfo(fmt.Errorf("received non-200 status code: %s", resp.Status), "error checking metadata file expiration")
 			util.PrintErrorTrace(err)
 			return
 		}
 
 		defer func() {
 			if networkCloseErr := resp.Body.Close(); networkCloseErr != nil {
-				util.PrintErrorTrace(util.ErrorWithInfo(networkCloseErr, "Error closing response body"))
+				util.PrintErrorTrace(util.ErrorWithInfo(networkCloseErr, "error closing response body"))
 			}
 		}()
 
 		document, err := goquery.NewDocumentFromReader(resp.Body)
 		if err != nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(err, "Error parsing html"))
+			util.PrintErrorTrace(util.ErrorWithInfo(err, "error parsing html"))
 			return
 		}
 
 		downloadButton := document.Find(`section[aria-label="download action"] a`).First()
 		if downloadButton == nil {
-			util.PrintErrorTrace(util.ErrorWithInfo(errors.New("No download button found"), "Error parsing html"))
+			util.PrintErrorTrace(util.ErrorWithInfo(errors.New("no download button found"), "error parsing html"))
 			return
 		}
 
 		href, exists := downloadButton.Attr("href")
 		if !exists {
-			util.PrintErrorTrace(util.ErrorWithInfo(errors.New("No href attribute found"), "Error parsing html"))
+			util.PrintErrorTrace(util.ErrorWithInfo(errors.New("no href attribute found"), "error parsing html"))
 			return
 		}
 

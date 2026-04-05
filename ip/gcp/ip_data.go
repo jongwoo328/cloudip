@@ -37,7 +37,7 @@ func (ipRange IpRangeDataGcp) IsEmpty() bool {
 func (ipDataManagerGcp *IpDataManagerGcp) GetLastModifiedUpstream() (time.Time, error) {
 	headers, err := util.GetHeadRequestHeader(ipDataManagerGcp.DataURI)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error getting header from request")
+		err = util.ErrorWithInfo(err, "error getting header from request")
 		util.PrintErrorTrace(err)
 		return time.Time{}, err
 	}
@@ -45,7 +45,7 @@ func (ipDataManagerGcp *IpDataManagerGcp) GetLastModifiedUpstream() (time.Time, 
 	lastModified := headers.Get("Last-Modified")
 	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
 	if err != nil {
-		err := util.ErrorWithInfo(err, "Error parsing Date header")
+		err := util.ErrorWithInfo(err, "error parsing Date header")
 		util.PrintErrorTrace(err)
 		return time.Time{}, err
 	}
@@ -65,13 +65,13 @@ func (ipDataManagerGcp *IpDataManagerGcp) downloadData() error {
 
 	headers, err := util.GetHeadRequestHeader(ipDataManagerGcp.DataURI)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error getting header from request")
+		err = util.ErrorWithInfo(err, "error getting header from request")
 		util.PrintErrorTrace(err)
 		return err
 	}
 	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error parsing Date header")
+		err = util.ErrorWithInfo(err, "error parsing Date header")
 		util.PrintErrorTrace(err)
 		return err
 	}
@@ -82,7 +82,7 @@ func (ipDataManagerGcp *IpDataManagerGcp) downloadData() error {
 			LastModified: currentLastModified.Unix(),
 		}
 		if err := metadataManager.Write(&metadata); err != nil {
-			err = util.ErrorWithInfo(err, "Error writing metadata")
+			err = util.ErrorWithInfo(err, "error writing metadata")
 			util.PrintErrorTrace(err)
 			return err
 		}
@@ -123,13 +123,13 @@ func (ipDataManagerGcp *IpDataManagerGcp) LoadIpData() *IpRangeDataGcp {
 	gcpIpRangeData := IpRangeDataGcp{}
 	ipDataFile, err := os.Open(ipDataManagerGcp.DataFilePath)
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error opening data file"))
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error opening data file"))
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
 	err = util.ReadJSON(ipDataFile, &gcpIpRangeData)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error reading data file")
+		err = util.ErrorWithInfo(err, "error reading data file")
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}

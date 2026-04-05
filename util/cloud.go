@@ -23,20 +23,20 @@ var downloadClient = &http.Client{
 func DownloadFromUrlToFile(url string, filePath string) error {
 	resp, err := downloadClient.Get(url)
 	if err != nil {
-		PrintErrorTrace(ErrorWithInfo(err, "Error downloading data file"))
+		PrintErrorTrace(ErrorWithInfo(err, "error downloading data file"))
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		err := ErrorWithInfo(fmt.Errorf("Received non-200 status code: %s", resp.Status), "Error downloading data file")
+		err := ErrorWithInfo(fmt.Errorf("received non-200 status code: %s", resp.Status), "error downloading data file")
 		PrintErrorTrace(err)
 		return err
 	}
 
 	dataFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
-		err = ErrorWithInfo(err, "Error opening data file")
+		err = ErrorWithInfo(err, "error opening data file")
 		PrintErrorTrace(err)
 		return err
 	}
@@ -44,7 +44,7 @@ func DownloadFromUrlToFile(url string, filePath string) error {
 
 	_, err = io.Copy(dataFile, resp.Body)
 	if err != nil {
-		err = ErrorWithInfo(err, "Error saving data file")
+		err = ErrorWithInfo(err, "error saving data file")
 		PrintErrorTrace(err)
 		return err
 	}

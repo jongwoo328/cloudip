@@ -43,7 +43,7 @@ func (bp *BaseProvider) GetName() string {
 func (bp *BaseProvider) CheckIP(ip string) (bool, error) {
 	parsedIp := net.ParseIP(ip)
 	if parsedIp == nil {
-		return false, fmt.Errorf("Error parsing IP: %s", ip)
+		return false, fmt.Errorf("error parsing IP: %s", ip)
 	}
 
 	if parsedIp.To4() != nil {

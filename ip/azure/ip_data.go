@@ -43,7 +43,7 @@ func (ipRange IpRangeDataAzure) IsEmpty() bool {
 func (ipDataManagerAzure *IpDataManagerAzure) GetLastModifiedUpstream() (time.Time, error) {
 	headers, err := util.GetHeadRequestHeader(ipDataManagerAzure.DataURI)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error getting header from request")
+		err = util.ErrorWithInfo(err, "error getting header from request")
 		util.PrintErrorTrace(err)
 		return time.Time{}, err
 	}
@@ -51,7 +51,7 @@ func (ipDataManagerAzure *IpDataManagerAzure) GetLastModifiedUpstream() (time.Ti
 	lastModified := headers.Get("Last-Modified")
 	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
 	if err != nil {
-		err := util.ErrorWithInfo(err, "Error parsing Date header")
+		err := util.ErrorWithInfo(err, "error parsing Date header")
 		util.PrintErrorTrace(err)
 		return time.Time{}, err
 	}
@@ -71,13 +71,13 @@ func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 
 	headers, err := util.GetHeadRequestHeader(ipDataManagerAzure.DataURI)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error getting header from request")
+		err = util.ErrorWithInfo(err, "error getting header from request")
 		util.PrintErrorTrace(err)
 		return err
 	}
 	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error parsing Date header")
+		err = util.ErrorWithInfo(err, "error parsing Date header")
 		util.PrintErrorTrace(err)
 		return err
 	}
@@ -88,7 +88,7 @@ func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 			LastModified: currentLastModified.Unix(),
 		}
 		if err := metadataManager.Write(&metadata); err != nil {
-			err = util.ErrorWithInfo(err, "Error writing metadata")
+			err = util.ErrorWithInfo(err, "error writing metadata")
 			util.PrintErrorTrace(err)
 			return err
 		}
@@ -130,13 +130,13 @@ func (ipDataManagerAzure *IpDataManagerAzure) LoadIpData() *IpRangeDataAzure {
 	azureIpRangeData := IpRangeDataAzure{}
 	ipDataFile, err := os.Open(ipDataManagerAzure.DataFilePath)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error loading data file")
+		err = util.ErrorWithInfo(err, "error loading data file")
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
 	err = util.ReadJSON(ipDataFile, &azureIpRangeData)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "Error reading data file")
+		err = util.ErrorWithInfo(err, "error reading data file")
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}

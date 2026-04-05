@@ -36,7 +36,7 @@ var Provider = NewAWSProvider()
 func Initialize() error {
 	err := Provider.Initialize()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "AWS provider initialization failed"))
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "aws provider initialization failed"))
 	}
 	return err
 }

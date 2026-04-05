@@ -17,7 +17,7 @@ var metadataManager = &common.MetadataManager{
 func isExpired() bool {
 	lastModifiedDate, err := ipDataManagerAzure.GetLastModifiedUpstream()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "Error getting last modified time from Microsoft server"))
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting last modified time from Microsoft server"))
 		return false
 	}
 	return metadataManager.IsExpired(lastModifiedDate)

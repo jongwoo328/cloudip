@@ -10,7 +10,7 @@ import (
 func GetAppDir(appName string) string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		PrintErrorTrace(ErrorWithInfo(err, "Cannot get home directory"))
+		PrintErrorTrace(ErrorWithInfo(err, "cannot get home directory"))
 		os.Exit(1)
 	}
 

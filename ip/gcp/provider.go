@@ -36,7 +36,7 @@ var Provider = NewGCPProvider()
 func Initialize() error {
 	err := Provider.Initialize()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "GCP provider initialization failed"))
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "gcp provider initialization failed"))
 	}
 	return err
 }
