@@ -58,6 +58,11 @@ func defaultTextFlags() common.CloudIpFlag {
 	}
 }
 
+type captureResult struct {
+	output string
+	err    error
+}
+
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
 	r, w, err := os.Pipe()
@@ -69,18 +74,18 @@ func captureStdout(t *testing.T, fn func()) string {
 	os.Stdout = w
 	defer func() { os.Stdout = origStdout }()
 
-	done := make(chan string)
+	done := make(chan captureResult)
 	go func() {
 		out, err := io.ReadAll(r)
-		if err != nil {
-			done <- ""
-			return
-		}
-		done <- string(out)
+		done <- captureResult{output: string(out), err: err}
 	}()
 
 	fn()
 	w.Close()
 
-	return <-done
+	result := <-done
+	if result.err != nil {
+		t.Fatalf("failed to read captured stdout: %v", result.err)
+	}
+	return result.output
 }
