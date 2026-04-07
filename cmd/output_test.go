@@ -182,17 +182,28 @@ func TestPrintResultAsTable(t *testing.T) {
 	})
 
 	lines := strings.Split(strings.TrimSpace(output), "\n")
-	if len(lines) < 3 {
-		t.Fatalf("expected at least 3 lines (header + 2 data), got %d: %q", len(lines), output)
+
+	// header + 2 data rows
+	if len(lines) != 3 {
+		t.Fatalf("expected 3 lines (header + 2 data), got %d: %q", len(lines), output)
 	}
+
+	// header is first line
 	if !strings.Contains(lines[0], "IP") || !strings.Contains(lines[0], "Provider") {
 		t.Errorf("expected header line to contain 'IP' and 'Provider', got: %q", lines[0])
 	}
-	if !strings.Contains(output, "1.2.3.4") || !strings.Contains(output, "aws") {
-		t.Errorf("expected table to contain '1.2.3.4' and 'aws', got: %q", output)
+
+	// data rows contain correct values in order
+	if !strings.Contains(lines[1], "1.2.3.4") || !strings.Contains(lines[1], "aws") {
+		t.Errorf("expected first data row to contain '1.2.3.4' and 'aws', got: %q", lines[1])
 	}
-	if !strings.Contains(output, "5.6.7.8") || !strings.Contains(output, "azure") {
-		t.Errorf("expected table to contain '5.6.7.8' and 'azure', got: %q", output)
+	if !strings.Contains(lines[2], "5.6.7.8") || !strings.Contains(lines[2], "azure") {
+		t.Errorf("expected second data row to contain '5.6.7.8' and 'azure', got: %q", lines[2])
+	}
+
+	// header comes before data (IP should not appear in header)
+	if strings.Contains(lines[0], "1.2.3.4") {
+		t.Errorf("expected header not to contain data values, got: %q", lines[0])
 	}
 }
 
