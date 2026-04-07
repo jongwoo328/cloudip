@@ -4,8 +4,8 @@ import (
 	"cloudip/common"
 	"encoding/json"
 	"fmt"
-	"testing"
 	"strings"
+	"testing"
 )
 
 // --- getProviderString ---
@@ -51,24 +51,28 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		format   string
-		expected string
+		name      string
+		format    string
+		delimiter string
+		expected  string
 	}{
 		{
-			name:     "dispatches to text",
-			format:   "text",
-			expected: "1.2.3.4 aws",
+			name:      "dispatches to text",
+			format:    "text",
+			delimiter: " ",
+			expected:  "1.2.3.4 aws",
 		},
 		{
-			name:     "dispatches to json",
-			format:   "json",
-			expected: `[{"IP":"1.2.3.4","Provider":"aws"}]`,
+			name:      "dispatches to json",
+			format:    "json",
+			delimiter: " ",
+			expected:  `[{"IP":"1.2.3.4","Provider":"aws"}]`,
 		},
 		{
-			name:     "dispatches to table",
-			format:   "table",
-			expected: "1.2.3.4\taws",
+			name:      "dispatches to table",
+			format:    "table",
+			delimiter: "\t",
+			expected:  "1.2.3.4\taws",
 		},
 	}
 
@@ -76,14 +80,15 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setupTest(t)
 			common.Flags.Format = tt.format
+			common.Flags.Delimiter = tt.delimiter
 
 			output := captureStdout(t, func() {
 				printResult(&results)
 			})
 
 			got := strings.TrimSpace(output)
-			if got != tt.expected {
-				t.Errorf("format '%s': expected %q, got %q", tt.format, tt.expected, got)
+			if !strings.Contains(got, tt.expected) {
+				t.Errorf("format '%s': expected output to contain %q, got %q", tt.format, tt.expected, got)
 			}
 		})
 	}
@@ -173,6 +178,13 @@ func TestPrintResultAsTable(t *testing.T) {
 		printResultAsTable(&results)
 	})
 
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) < 3 {
+		t.Fatalf("expected at least 3 lines (header + 2 data), got %d: %q", len(lines), output)
+	}
+	if !strings.Contains(lines[0], "IP") || !strings.Contains(lines[0], "Provider") {
+		t.Errorf("expected header line to contain 'IP' and 'Provider', got: %q", lines[0])
+	}
 	if !strings.Contains(output, "1.2.3.4") || !strings.Contains(output, "aws") {
 		t.Errorf("expected table to contain '1.2.3.4' and 'aws', got: %q", output)
 	}
@@ -181,31 +193,7 @@ func TestPrintResultAsTable(t *testing.T) {
 	}
 }
 
-func TestPrintResultAsTableWithHeader(t *testing.T) {
-	setupTest(t)
-	common.Flags.Header = true
-
-	results := []common.Result{
-		{Ip: "10.0.0.1", Provider: common.AWS},
-	}
-
-	output := captureStdout(t, func() {
-		printResultAsTable(&results)
-	})
-
-	lines := strings.Split(strings.TrimSpace(output), "\n")
-	if len(lines) < 2 {
-		t.Fatalf("expected at least 2 lines (header + data), got %d: %q", len(lines), output)
-	}
-	if !strings.Contains(lines[0], "PROVIDER") {
-		t.Errorf("expected first line to contain 'PROVIDER', got: %q", lines[0])
-	}
-	if strings.Contains(lines[0], "10.0.0.1") {
-		t.Errorf("expected header line not to contain data IP, got: %q", lines[0])
-	}
-}
-
-func TestPrintResultAsTableWithoutHeader(t *testing.T) {
+func TestPrintResultAsTableAlwaysHasHeader(t *testing.T) {
 	setupTest(t)
 	common.Flags.Header = false
 
@@ -217,8 +205,8 @@ func TestPrintResultAsTableWithoutHeader(t *testing.T) {
 		printResultAsTable(&results)
 	})
 
-	if strings.Contains(output, "PROVIDER") {
-		t.Errorf("expected no header row, but found 'PROVIDER' in output: %q", output)
+	if !strings.Contains(output, "Provider") {
+		t.Errorf("expected table to always include header, but 'Provider' not found in output: %q", output)
 	}
 }
 

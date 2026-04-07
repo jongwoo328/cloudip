@@ -95,7 +95,7 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
 
 ### Output Options
 - #### Custom Delimiters
-  You can specify a custom delimiter for the output. The default delimiter is a space.
+  You can specify a custom delimiter for the output. The default delimiter is a space for `text` format and a tab for `table` format.
   - Comma (,) Delimited
     ```shell
     cloudip 54.230.176.25 --delimiter=','
@@ -136,14 +136,23 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
     54.230.176.25 aws
     ```
 
-  - `table`: Displays results in a table format.
+  - `table`: Displays results in a table format. Columns are padded with spaces for alignment, making it easy to read. The header is always displayed.
     ```shell
-    cloudip 54.230.176.25 --format=table --header
+    cloudip 54.230.176.25 --format=table
     ```
     Output:
     ```text
-    IP              PROVIDER 
-    54.230.176.25   aws
+    IP            Provider
+    54.230.176.25 aws
+    ```
+    The `--delimiter` option can also be used with the `table` format.
+    ```shell
+    cloudip 54.230.176.25 --format=table --delimiter=' | '
+    ```
+    Output:
+    ```text
+    IP            | Provider
+    54.230.176.25 | aws
     ```
 
   - `json`: Outputs results in JSON format, suitable for parsing with tools like `jq`.

@@ -4,8 +4,11 @@ import (
 	"cloudip/common"
 	"encoding/json"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"os"
+
+	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 )
 
 func getProviderString(r common.Result) string {
@@ -44,25 +47,22 @@ func printResultAsText(results *[]common.Result) {
 	}
 }
 func printResultAsTable(results *[]common.Result) {
-	table := tablewriter.NewWriter(os.Stdout)
-	if common.Flags.Header {
-		table.SetHeader([]string{headers["IP"], headers["Provider"]})
-	}
-	table.SetBorder(false)
-	table.SetHeaderLine(false)
-	table.SetColumnSeparator("")
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetRowSeparator("")
-	table.SetTablePadding("\t")
-	table.SetNoWhiteSpace(true)
+	table := tablewriter.NewTable(os.Stdout,
+		tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
+			Borders:  tw.Border{Left: tw.Off, Right: tw.Off, Top: tw.Off, Bottom: tw.Off},
+			Symbols:  tw.NewSymbolCustom("delim").WithColumn(common.Flags.Delimiter),
+			Settings: tw.Settings{Lines: tw.LinesNone},
+		})),
+		tablewriter.WithHeaderAlignment(tw.AlignLeft),
+		tablewriter.WithRowAlignment(tw.AlignLeft),
+		tablewriter.WithHeaderAutoFormat(tw.Off),
+		tablewriter.WithPadding(tw.PaddingNone),
+	)
 
-	tableData := make([][]string, 0)
+	table.Header(headers["IP"], headers["Provider"])
 	for _, r := range *results {
-		tableData = append(tableData, []string{r.Ip, getProviderString(r)})
+		table.Append(r.Ip, getProviderString(r))
 	}
-	table.AppendBulk(tableData)
 	table.Render()
 }
 

@@ -95,7 +95,7 @@ yay -S cloudip
 
 ### 출력 옵션 (Output Options)
 - #### 구분자 지정 (Delimiter Specification)
-  출력에 사용할 구분자를 지정할 수 있습니다. 기본 구분자는 공백입니다.
+  출력에 사용할 구분자를 지정할 수 있습니다. 기본 구분자는 `text` 형식에서는 공백, `table` 형식에서는 탭입니다.
   - 쉼표(,) 구분 (Comma (,) Delimited)
     ```shell
     cloudip 54.230.176.25 --delimiter=','
@@ -135,14 +135,23 @@ yay -S cloudip
     54.230.176.25 aws
     ```
 
-  - `table`: 표 형태로 정렬하여 결과를 표시합니다.
+  - `table`: 표 형태로 결과를 표시합니다. 컬럼 너비에 맞춰 공백으로 여백을 채워 보기 쉽게 정렬합니다. 헤더는 항상 출력됩니다.
     ```shell
-    cloudip 54.230.176.25 --format=table --header
+    cloudip 54.230.176.25 --format=table
     ```
     출력:
     ```text
-    IP              PROVIDER 
-    54.230.176.25   aws
+    IP            Provider
+    54.230.176.25 aws
+    ```
+    `--delimiter` 옵션을 `table` 형식에서도 사용할 수 있습니다.
+    ```shell
+    cloudip 54.230.176.25 --format=table --delimiter=' | '
+    ```
+    출력:
+    ```text
+    IP            | Provider
+    54.230.176.25 | aws
     ```
 
   - `json`: JSON 형식으로 결과를 출력합니다. `jq`와 같은 도구로 파싱하기 용이합니다.
