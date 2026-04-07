@@ -35,7 +35,7 @@ func Execute() error {
 func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.Flags().StringVarP(&common.Flags.Format, "format", "f", "text", "Output format (text, table, json)")
-	rootCmd.Flags().BoolVar(&common.Flags.Header, "header", false, "Print header in the output. Only applicable for 'text', 'table' format")
-	rootCmd.Flags().StringVar(&common.Flags.Delimiter, "delimiter", " ", "Delimiter for the output. Only applicable for 'text' format")
+	rootCmd.Flags().BoolVar(&common.Flags.Header, "header", false, "Print header in the output. Only applicable for 'text' format")
+	rootCmd.Flags().StringVar(&common.Flags.Delimiter, "delimiter", " ", "Delimiter for the output. Applicable for 'text' and 'table' format")
 	rootCmd.Flags().BoolVarP(&common.Flags.Verbose, "verbose", "v", false, "Print verbose output")
 }
