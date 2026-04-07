@@ -26,16 +26,18 @@ var headers = map[string]string{
 	"Provider": "Provider",
 }
 
-func printResult(results *[]common.Result, flags *common.CloudIpFlag) {
-	if flags.Format == "text" {
+func printResult(results *[]common.Result, flags *common.CloudIpFlag) error {
+	switch flags.Format {
+	case "text":
 		printResultAsText(results, flags)
-	} else if flags.Format == "table" {
+	case "table":
 		printResultAsTable(results, flags)
-	} else if flags.Format == "json" {
+	case "json":
 		printResultAsJson(results)
-	} else {
-		fmt.Printf("Invalid output format: %s. Supported formats are: text, table, json\n", flags.Format)
+	default:
+		return fmt.Errorf("invalid output format: %s. Supported formats are: text, table, json", flags.Format)
 	}
+	return nil
 }
 
 func printResultAsText(results *[]common.Result, flags *common.CloudIpFlag) {

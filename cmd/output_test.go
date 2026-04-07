@@ -72,9 +72,14 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 			_, flags := newTestCmd(t)
 			flags.Format = tt.format
 
+			var err error
 			output := captureStdout(t, func() {
-				printResult(&results, flags)
+				err = printResult(&results, flags)
 			})
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
 			got := strings.TrimSpace(output)
 			if got != tt.expected {
@@ -87,12 +92,31 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		_, flags := newTestCmd(t)
 		flags.Format = "table"
 
+		var err error
 		output := captureStdout(t, func() {
-			printResult(&results, flags)
+			err = printResult(&results, flags)
 		})
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if !strings.Contains(output, "1.2.3.4") || !strings.Contains(output, "aws") {
 			t.Errorf("format 'table': expected output to contain '1.2.3.4' and 'aws', got %q", output)
+		}
+	})
+
+	t.Run("returns error for invalid format", func(t *testing.T) {
+		_, flags := newTestCmd(t)
+		flags.Format = "yaml"
+
+		err := printResult(&results, flags)
+
+		if err == nil {
+			t.Error("expected error for invalid format, got nil")
+		}
+		if !strings.Contains(err.Error(), "yaml") {
+			t.Errorf("expected error to mention 'yaml', got: %v", err)
 		}
 	})
 }

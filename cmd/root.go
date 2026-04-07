@@ -14,10 +14,10 @@ func NewRootCmd(flags *common.CloudIpFlag, checker *ip.IPChecker) *cobra.Command
 		Use:   common.AppName,
 		Short: fmt.Sprintf("%s is a CLI tool for identifying whether an IP address belongs to a major cloud provider (e.g., AWS, GCP).", common.AppName),
 		Args:  cobra.ArbitraryArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			common.SetVerbose(flags.Verbose)
 			result := checker.Check(args)
-			printResult(&result, flags)
+			return printResult(&result, flags)
 		},
 	}
 
