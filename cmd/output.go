@@ -33,7 +33,7 @@ func printResult(results *[]common.Result, flags *common.CloudIpFlag) error {
 	case "table":
 		printResultAsTable(results, flags)
 	case "json":
-		printResultAsJson(results)
+		return printResultAsJson(results)
 	default:
 		return fmt.Errorf("invalid output format: %s. Supported formats are: text, table, json", flags.Format)
 	}
@@ -68,7 +68,7 @@ func printResultAsTable(results *[]common.Result, flags *common.CloudIpFlag) {
 	table.Render()
 }
 
-func printResultAsJson(results *[]common.Result) {
+func printResultAsJson(results *[]common.Result) error {
 	resultSlice := make([]map[string]string, 0)
 	for _, r := range *results {
 		resultMap := map[string]string{
@@ -79,8 +79,8 @@ func printResultAsJson(results *[]common.Result) {
 	}
 	bytes, err := json.Marshal(resultSlice)
 	if err != nil {
-		fmt.Println("Error converting result to JSON")
-		os.Exit(1)
+		return fmt.Errorf("error converting result to JSON: %w", err)
 	}
 	fmt.Println(string(bytes))
+	return nil
 }
