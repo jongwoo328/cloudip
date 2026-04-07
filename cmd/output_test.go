@@ -51,28 +51,19 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		format    string
-		delimiter string
-		expected  string
+		name     string
+		format   string
+		expected string
 	}{
 		{
-			name:      "dispatches to text",
-			format:    "text",
-			delimiter: " ",
-			expected:  "1.2.3.4 aws",
+			name:     "dispatches to text",
+			format:   "text",
+			expected: "1.2.3.4 aws",
 		},
 		{
-			name:      "dispatches to json",
-			format:    "json",
-			delimiter: " ",
-			expected:  `[{"IP":"1.2.3.4","Provider":"aws"}]`,
-		},
-		{
-			name:      "dispatches to table",
-			format:    "table",
-			delimiter: "\t",
-			expected:  "1.2.3.4\taws",
+			name:     "dispatches to json",
+			format:   "json",
+			expected: `[{"IP":"1.2.3.4","Provider":"aws"}]`,
 		},
 	}
 
@@ -80,18 +71,30 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setupTest(t)
 			common.Flags.Format = tt.format
-			common.Flags.Delimiter = tt.delimiter
 
 			output := captureStdout(t, func() {
 				printResult(&results)
 			})
 
 			got := strings.TrimSpace(output)
-			if !strings.Contains(got, tt.expected) {
-				t.Errorf("format '%s': expected output to contain %q, got %q", tt.format, tt.expected, got)
+			if got != tt.expected {
+				t.Errorf("format '%s': expected %q, got %q", tt.format, tt.expected, got)
 			}
 		})
 	}
+
+	t.Run("dispatches to table", func(t *testing.T) {
+		setupTest(t)
+		common.Flags.Format = "table"
+
+		output := captureStdout(t, func() {
+			printResult(&results)
+		})
+
+		if !strings.Contains(output, "1.2.3.4") || !strings.Contains(output, "aws") {
+			t.Errorf("format 'table': expected output to contain '1.2.3.4' and 'aws', got %q", output)
+		}
+	})
 }
 
 // --- Text format ---

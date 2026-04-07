@@ -95,7 +95,7 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
 
 ### Output Options
 - #### Custom Delimiters
-  You can specify a custom delimiter for the output. The default delimiter is a space for `text` format and a tab for `table` format.
+  You can specify a custom delimiter for the output. The default delimiter is a space.
   - Comma (,) Delimited
     ```shell
     cloudip 54.230.176.25 --delimiter=','

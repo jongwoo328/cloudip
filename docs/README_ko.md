@@ -95,7 +95,7 @@ yay -S cloudip
 
 ### 출력 옵션 (Output Options)
 - #### 구분자 지정 (Delimiter Specification)
-  출력에 사용할 구분자를 지정할 수 있습니다. 기본 구분자는 `text` 형식에서는 공백, `table` 형식에서는 탭입니다.
+  출력에 사용할 구분자를 지정할 수 있습니다. 기본 구분자는 공백입니다.
   - 쉼표(,) 구분 (Comma (,) Delimited)
     ```shell
     cloudip 54.230.176.25 --delimiter=','
