@@ -68,12 +68,6 @@ func (m *mockProvider) GetName() string {
 }
 
 func TestCheckCloudIp(t *testing.T) {
-	// Save original providers
-	originalProviders := cloudProviders
-	defer func() {
-		cloudProviders = originalProviders
-	}()
-
 	tests := []struct {
 		name             string
 		ip               string
@@ -137,41 +131,42 @@ func TestCheckCloudIp(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cloudProviders = tt.mockProviders
+			checker := NewIPChecker(tt.mockProviders, DefaultProviderOrder)
+			results := checker.Check([]string{tt.ip})
 
-			result, err := checkCloudIp(tt.ip)
+			if len(results) != 1 {
+				t.Fatalf("Expected 1 result, got %d", len(results))
+			}
+
+			result := results[0]
 
 			if tt.expectError {
-				if err == nil {
+				if result.Error == nil {
 					t.Errorf("Expected error but got none")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+			if result.Error != nil {
+				t.Errorf("Unexpected error: %v", result.Error)
 				return
 			}
 
-			if result != tt.expectedProvider {
-				t.Errorf("Provider mismatch: got %q, expected %q", result, tt.expectedProvider)
+			if result.Provider != tt.expectedProvider {
+				t.Errorf("Provider mismatch: got %q, expected %q", result.Provider, tt.expectedProvider)
 			}
 		})
 	}
 }
 
 func TestCheck(t *testing.T) {
-	// Save original providers
-	originalProviders := cloudProviders
-	defer func() {
-		cloudProviders = originalProviders
-	}()
-
-	// Set up mock providers
-	cloudProviders = map[common.CloudProvider]provider.CloudProvider{
-		common.AWS: newMockProvider("AWS", true, false, false),
-		common.GCP: newMockProvider("GCP", false, false, false),
-	}
+	checker := NewIPChecker(
+		map[common.CloudProvider]provider.CloudProvider{
+			common.AWS: newMockProvider("AWS", true, false, false),
+			common.GCP: newMockProvider("GCP", false, false, false),
+		},
+		DefaultProviderOrder,
+	)
 
 	tests := []struct {
 		name        string
@@ -197,7 +192,7 @@ func TestCheck(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := Check(tt.ips)
+			results := checker.Check(tt.ips)
 
 			if len(results) != tt.expectedLen {
 				t.Errorf("Expected %d results, got %d", tt.expectedLen, len(results))
@@ -214,21 +209,18 @@ func TestCheck(t *testing.T) {
 }
 
 func TestCheckWithProviderOrder(t *testing.T) {
-	// Save original providers
-	originalProviders := cloudProviders
-	defer func() {
-		cloudProviders = originalProviders
-	}()
-
 	// Test that first matching provider wins
-	cloudProviders = map[common.CloudProvider]provider.CloudProvider{
-		common.AWS:   newMockProvider("AWS", true, false, false),
-		common.GCP:   newMockProvider("GCP", true, false, false),
-		common.Azure: newMockProvider("Azure", true, false, false),
-	}
+	checker := NewIPChecker(
+		map[common.CloudProvider]provider.CloudProvider{
+			common.AWS:   newMockProvider("AWS", true, false, false),
+			common.GCP:   newMockProvider("GCP", true, false, false),
+			common.Azure: newMockProvider("Azure", true, false, false),
+		},
+		DefaultProviderOrder,
+	)
 
 	ips := []string{"192.168.1.1"}
-	results := Check(ips)
+	results := checker.Check(ips)
 
 	if len(results) != 1 {
 		t.Fatalf("Expected 1 result, got %d", len(results))

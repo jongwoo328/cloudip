@@ -8,14 +8,16 @@ import (
 )
 
 func TestVersionCmd(t *testing.T) {
-	setupTest(t)
+	savedVersion := Version
+	t.Cleanup(func() { Version = savedVersion })
 	Version = "0.8.1"
 
+	cmd, _ := newTestCmd(t)
 	buf := new(bytes.Buffer)
-	rootCmd.SetOut(buf)
-	rootCmd.SetArgs([]string{"version"})
+	cmd.SetOut(buf)
+	cmd.SetArgs([]string{"version"})
 
-	err := rootCmd.Execute()
+	err := cmd.Execute()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -27,17 +29,18 @@ func TestVersionCmd(t *testing.T) {
 }
 
 func TestVersionCmdRejectsArgs(t *testing.T) {
-	setupTest(t)
-	rootCmd.SetArgs([]string{"version", "extra"})
+	cmd, _ := newTestCmd(t)
+	cmd.SetArgs([]string{"version", "extra"})
 
-	err := rootCmd.Execute()
+	err := cmd.Execute()
 	if err == nil {
 		t.Error("expected error when passing args to version command")
 	}
 }
 
 func TestFlagDefaults(t *testing.T) {
-	flags := rootCmd.Flags()
+	cmd, _ := newTestCmd(t)
+	flags := cmd.Flags()
 
 	tests := []struct {
 		name     string
@@ -67,13 +70,13 @@ func TestFlagBinding(t *testing.T) {
 	tests := []struct {
 		name   string
 		args   []string
-		verify func(t *testing.T)
+		verify func(t *testing.T, flags *common.CloudIpFlag)
 	}{
 		{
 			name: "verbose short flag",
 			args: []string{"-v"},
-			verify: func(t *testing.T) {
-				if !common.Flags.Verbose {
+			verify: func(t *testing.T, flags *common.CloudIpFlag) {
+				if !flags.Verbose {
 					t.Error("expected Flags.Verbose to be true")
 				}
 			},
@@ -81,26 +84,26 @@ func TestFlagBinding(t *testing.T) {
 		{
 			name: "format flag",
 			args: []string{"--format", "json"},
-			verify: func(t *testing.T) {
-				if common.Flags.Format != "json" {
-					t.Errorf("expected Flags.Format 'json', got '%s'", common.Flags.Format)
+			verify: func(t *testing.T, flags *common.CloudIpFlag) {
+				if flags.Format != "json" {
+					t.Errorf("expected Flags.Format 'json', got '%s'", flags.Format)
 				}
 			},
 		},
 		{
 			name: "delimiter flag",
 			args: []string{"--delimiter", ","},
-			verify: func(t *testing.T) {
-				if common.Flags.Delimiter != "," {
-					t.Errorf("expected Flags.Delimiter ',', got '%s'", common.Flags.Delimiter)
+			verify: func(t *testing.T, flags *common.CloudIpFlag) {
+				if flags.Delimiter != "," {
+					t.Errorf("expected Flags.Delimiter ',', got '%s'", flags.Delimiter)
 				}
 			},
 		},
 		{
 			name: "header flag",
 			args: []string{"--header"},
-			verify: func(t *testing.T) {
-				if !common.Flags.Header {
+			verify: func(t *testing.T, flags *common.CloudIpFlag) {
+				if !flags.Header {
 					t.Error("expected Flags.Header to be true")
 				}
 			},
@@ -109,12 +112,12 @@ func TestFlagBinding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupTest(t)
-			err := rootCmd.Flags().Parse(tt.args)
+			cmd, flags := newTestCmd(t)
+			err := cmd.Flags().Parse(tt.args)
 			if err != nil {
 				t.Fatalf("unexpected error parsing flags: %v", err)
 			}
-			tt.verify(t)
+			tt.verify(t, flags)
 		})
 	}
 }

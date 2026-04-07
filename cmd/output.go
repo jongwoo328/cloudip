@@ -26,31 +26,31 @@ var headers = map[string]string{
 	"Provider": "Provider",
 }
 
-func printResult(results *[]common.Result) {
-	if common.Flags.Format == "text" {
-		printResultAsText(results)
-	} else if common.Flags.Format == "table" {
-		printResultAsTable(results)
-	} else if common.Flags.Format == "json" {
+func printResult(results *[]common.Result, flags *common.CloudIpFlag) {
+	if flags.Format == "text" {
+		printResultAsText(results, flags)
+	} else if flags.Format == "table" {
+		printResultAsTable(results, flags)
+	} else if flags.Format == "json" {
 		printResultAsJson(results)
 	} else {
-		fmt.Printf("Invalid output format: %s. Supported formats are: text, table, json\n", common.Flags.Format)
+		fmt.Printf("Invalid output format: %s. Supported formats are: text, table, json\n", flags.Format)
 	}
 }
 
-func printResultAsText(results *[]common.Result) {
-	if common.Flags.Header {
-		fmt.Printf("%s%s%s\n", headers["IP"], common.Flags.Delimiter, headers["Provider"])
+func printResultAsText(results *[]common.Result, flags *common.CloudIpFlag) {
+	if flags.Header {
+		fmt.Printf("%s%s%s\n", headers["IP"], flags.Delimiter, headers["Provider"])
 	}
 	for _, r := range *results {
-		fmt.Printf("%s%s%s\n", r.Ip, common.Flags.Delimiter, getProviderString(r))
+		fmt.Printf("%s%s%s\n", r.Ip, flags.Delimiter, getProviderString(r))
 	}
 }
-func printResultAsTable(results *[]common.Result) {
+func printResultAsTable(results *[]common.Result, flags *common.CloudIpFlag) {
 	table := tablewriter.NewTable(os.Stdout,
 		tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
 			Borders:  tw.Border{Left: tw.Off, Right: tw.Off, Top: tw.Off, Bottom: tw.Off},
-			Symbols:  tw.NewSymbolCustom("delim").WithColumn(common.Flags.Delimiter),
+			Symbols:  tw.NewSymbolCustom("delim").WithColumn(flags.Delimiter),
 			Settings: tw.Settings{Lines: tw.LinesNone},
 		})),
 		tablewriter.WithHeaderAlignment(tw.AlignLeft),

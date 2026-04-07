@@ -4,7 +4,7 @@ import (
 	"cloudip/common"
 )
 
-var Providers = []common.CloudProvider{
+var DefaultProviderOrder = []common.CloudProvider{
 	common.AWS,
 	common.GCP,
 	common.Azure,

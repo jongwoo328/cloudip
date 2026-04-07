@@ -2,17 +2,23 @@ package ip
 
 import (
 	"cloudip/common"
-	"cloudip/ip/aws"
-	"cloudip/ip/azure"
-	"cloudip/ip/gcp"
 	"cloudip/ip/provider"
 )
 
-func Check(ips []string) []common.Result {
+type IPChecker struct {
+	providers     map[common.CloudProvider]provider.CloudProvider
+	providerOrder []common.CloudProvider
+}
+
+func NewIPChecker(providers map[common.CloudProvider]provider.CloudProvider, order []common.CloudProvider) *IPChecker {
+	return &IPChecker{providers: providers, providerOrder: order}
+}
+
+func (c *IPChecker) Check(ips []string) []common.Result {
 	results := make([]common.Result, len(ips))
 
 	for index, ip := range ips {
-		provider, err := checkCloudIp(ip)
+		provider, err := c.checkCloudIp(ip)
 		results[index] = common.Result{
 			Ip:       ip,
 			Provider: provider,
@@ -23,15 +29,9 @@ func Check(ips []string) []common.Result {
 	return results
 }
 
-var cloudProviders = map[common.CloudProvider]provider.CloudProvider{
-	common.AWS:   aws.Provider,
-	common.GCP:   gcp.Provider,
-	common.Azure: azure.Provider,
-}
-
-func checkCloudIp(ip string) (common.CloudProvider, error) {
-	for _, providerType := range Providers {
-		p, exists := cloudProviders[providerType]
+func (c *IPChecker) checkCloudIp(ip string) (common.CloudProvider, error) {
+	for _, providerType := range c.providerOrder {
+		p, exists := c.providers[providerType]
 		if !exists {
 			continue
 		}

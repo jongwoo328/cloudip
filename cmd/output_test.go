@@ -69,11 +69,11 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupTest(t)
-			common.Flags.Format = tt.format
+			_, flags := newTestCmd(t)
+			flags.Format = tt.format
 
 			output := captureStdout(t, func() {
-				printResult(&results)
+				printResult(&results, flags)
 			})
 
 			got := strings.TrimSpace(output)
@@ -84,11 +84,11 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 	}
 
 	t.Run("dispatches to table", func(t *testing.T) {
-		setupTest(t)
-		common.Flags.Format = "table"
+		_, flags := newTestCmd(t)
+		flags.Format = "table"
 
 		output := captureStdout(t, func() {
-			printResult(&results)
+			printResult(&results, flags)
 		})
 
 		if !strings.Contains(output, "1.2.3.4") || !strings.Contains(output, "aws") {
@@ -146,12 +146,12 @@ func TestPrintResultAsText(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupTest(t)
-			common.Flags.Delimiter = tt.delimiter
-			common.Flags.Header = tt.header
+			_, flags := newTestCmd(t)
+			flags.Delimiter = tt.delimiter
+			flags.Header = tt.header
 
 			output := captureStdout(t, func() {
-				printResultAsText(&tt.results)
+				printResultAsText(&tt.results, flags)
 			})
 
 			lines := strings.Split(strings.TrimSpace(output), "\n")
@@ -170,7 +170,7 @@ func TestPrintResultAsText(t *testing.T) {
 // --- Table format ---
 
 func TestPrintResultAsTable(t *testing.T) {
-	setupTest(t)
+	_, flags := newTestCmd(t)
 
 	results := []common.Result{
 		{Ip: "1.2.3.4", Provider: common.AWS},
@@ -178,7 +178,7 @@ func TestPrintResultAsTable(t *testing.T) {
 	}
 
 	output := captureStdout(t, func() {
-		printResultAsTable(&results)
+		printResultAsTable(&results, flags)
 	})
 
 	lines := strings.Split(strings.TrimSpace(output), "\n")
@@ -208,15 +208,15 @@ func TestPrintResultAsTable(t *testing.T) {
 }
 
 func TestPrintResultAsTableAlwaysHasHeader(t *testing.T) {
-	setupTest(t)
-	common.Flags.Header = false
+	_, flags := newTestCmd(t)
+	flags.Header = false
 
 	results := []common.Result{
 		{Ip: "10.0.0.1", Provider: common.AWS},
 	}
 
 	output := captureStdout(t, func() {
-		printResultAsTable(&results)
+		printResultAsTable(&results, flags)
 	})
 
 	if !strings.Contains(output, "Provider") {
@@ -260,8 +260,6 @@ func TestPrintResultAsJson(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupTest(t)
-
 			output := captureStdout(t, func() {
 				printResultAsJson(&tt.results)
 			})
