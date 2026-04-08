@@ -67,7 +67,7 @@ func (m *mockProvider) GetName() string {
 	return m.name
 }
 
-func TestCheckCloudIp(t *testing.T) {
+func TestCheckerCheck(t *testing.T) {
 	tests := []struct {
 		name             string
 		ip               string
