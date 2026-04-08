@@ -9,4 +9,3 @@ type CloudIpFlag struct {
 	Verbose   bool
 }
 
-var Flags = &CloudIpFlag{}

@@ -2,60 +2,20 @@ package cmd
 
 import (
 	"cloudip/common"
+	"cloudip/ip"
 	"io"
 	"os"
 	"testing"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 )
 
-// setupTest saves and restores all mutable global state shared across cmd tests:
-// common.Flags, Version, rootCmd output writer, rootCmd args, and Cobra flag states.
-// Call at the top of every test that touches any of these.
-func setupTest(t *testing.T) {
+func newTestCmd(t *testing.T) (*cobra.Command, *common.CloudIpFlag) {
 	t.Helper()
-
-	savedFlags := *common.Flags
-	savedVersion := Version
-
-	// Save Cobra flag values and Changed states
-	type flagSnapshot struct {
-		value   string
-		changed bool
-	}
-	savedFlagStates := make(map[string]flagSnapshot)
-	rootCmd.Flags().VisitAll(func(f *pflag.Flag) {
-		savedFlagStates[f.Name] = flagSnapshot{
-			value:   f.Value.String(),
-			changed: f.Changed,
-		}
-	})
-
-	t.Cleanup(func() {
-		*common.Flags = savedFlags
-		Version = savedVersion
-		rootCmd.SetOut(nil)
-		rootCmd.SetArgs(nil)
-
-		rootCmd.Flags().VisitAll(func(f *pflag.Flag) {
-			if s, ok := savedFlagStates[f.Name]; ok {
-				f.Value.Set(s.value)
-				f.Changed = s.changed
-			}
-		})
-	})
-
-	// Reset to clean defaults
-	*common.Flags = defaultTextFlags()
-}
-
-func defaultTextFlags() common.CloudIpFlag {
-	return common.CloudIpFlag{
-		Format:    "text",
-		Delimiter: " ",
-		Header:    false,
-		Verbose:   false,
-	}
+	flags := &common.CloudIpFlag{}
+	checker := ip.NewIPChecker(nil, nil)
+	cmd := NewRootCmd(flags, checker)
+	return cmd, flags
 }
 
 type captureResult struct {
