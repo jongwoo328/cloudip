@@ -5,6 +5,7 @@ import (
 	"cloudip/ip/provider"
 	"cloudip/util"
 	"errors"
+	"net"
 	"testing"
 )
 
@@ -44,7 +45,7 @@ func (m *mockProvider) Initialize() error {
 	return nil
 }
 
-func (m *mockProvider) CheckIP(ip string) (bool, error) {
+func (m *mockProvider) CheckParsedIP(parsedIP net.IP) (bool, error) {
 	if m.shouldError {
 		return false, errors.New("check IP failed")
 	}
@@ -55,7 +56,7 @@ func (m *mockProvider) CheckIP(ip string) (bool, error) {
 	// Simple mock logic - just check if it should match
 	if m.shouldMatch {
 		// For testing purposes, match specific IPs
-		switch ip {
+		switch parsedIP.String() {
 		case "192.168.1.1", "10.1.1.1", "2001:db8::1":
 			return true, nil
 		}
@@ -120,7 +121,7 @@ func TestCheckerCheck(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "CheckIP error",
+			name: "CheckParsedIP error",
 			ip:   "192.168.1.1",
 			mockProviders: map[common.CloudProvider]provider.CloudProvider{
 				common.AWS: newMockProvider("AWS", true, true, false),

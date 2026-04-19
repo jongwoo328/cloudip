@@ -3,6 +3,7 @@ package provider
 import (
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"testing"
 )
@@ -157,7 +158,18 @@ func TestBaseProvider_ConcurrentInitialize(t *testing.T) {
 	}
 }
 
-func TestBaseProvider_CheckIP(t *testing.T) {
+func mustParseIP(tb testing.TB, raw string) net.IP {
+	tb.Helper()
+
+	parsedIP := net.ParseIP(raw)
+	if parsedIP == nil {
+		tb.Fatalf("failed to parse IP %q", raw)
+	}
+
+	return parsedIP
+}
+
+func TestBaseProvider_CheckParsedIP_BasicCases(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 
@@ -174,49 +186,43 @@ func TestBaseProvider_CheckIP(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		ip          string
+		ip          net.IP
 		expected    bool
 		expectError bool
 	}{
 		{
 			name:        "IPv4 in range",
-			ip:          "192.168.1.100",
+			ip:          mustParseIP(t, "192.168.1.100"),
 			expected:    true,
 			expectError: false,
 		},
 		{
 			name:        "IPv4 not in range",
-			ip:          "192.168.2.1",
+			ip:          mustParseIP(t, "192.168.2.1"),
 			expected:    false,
 			expectError: false,
 		},
 		{
 			name:        "IPv4 in large range",
-			ip:          "10.1.1.1",
+			ip:          mustParseIP(t, "10.1.1.1"),
 			expected:    true,
 			expectError: false,
 		},
 		{
 			name:        "IPv6 in range",
-			ip:          "2001:db8::1",
+			ip:          mustParseIP(t, "2001:db8::1"),
 			expected:    true,
 			expectError: false,
 		},
 		{
 			name:        "IPv6 not in range",
-			ip:          "2001:db9::1",
+			ip:          mustParseIP(t, "2001:db9::1"),
 			expected:    false,
 			expectError: false,
 		},
 		{
-			name:        "Invalid IP",
-			ip:          "invalid-ip",
-			expected:    false,
-			expectError: true,
-		},
-		{
-			name:        "Empty IP",
-			ip:          "",
+			name:        "Nil IP",
+			ip:          nil,
 			expected:    false,
 			expectError: true,
 		},
@@ -224,7 +230,7 @@ func TestBaseProvider_CheckIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := bp.CheckIP(tt.ip)
+			result, err := bp.CheckParsedIP(tt.ip)
 
 			if tt.expectError {
 				if err == nil {
@@ -239,7 +245,7 @@ func TestBaseProvider_CheckIP(t *testing.T) {
 			}
 
 			if result != tt.expected {
-				t.Errorf("Expected %v, got %v for IP %s", tt.expected, result, tt.ip)
+				t.Errorf("Expected %v, got %v for IP %v", tt.expected, result, tt.ip)
 			}
 		})
 	}
@@ -256,7 +262,7 @@ func TestBaseProvider_AddIPRanges(t *testing.T) {
 
 	// Test AddIPv4Range
 	bp.AddIPv4Range("192.168.1.0/24")
-	match, err := bp.CheckIP("192.168.1.1")
+	match, err := bp.CheckParsedIP(mustParseIP(t, "192.168.1.1"))
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -266,7 +272,7 @@ func TestBaseProvider_AddIPRanges(t *testing.T) {
 
 	// Test AddIPv6Range
 	bp.AddIPv6Range("2001:db8::/32")
-	match, err = bp.CheckIP("2001:db8::1")
+	match, err = bp.CheckParsedIP(mustParseIP(t, "2001:db8::1"))
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -287,28 +293,28 @@ func TestBaseProvider_AddCIDRRange(t *testing.T) {
 	tests := []struct {
 		name        string
 		cidr        string
-		testIP      string
+		testIP      net.IP
 		expected    bool
 		expectError bool
 	}{
 		{
 			name:        "Valid IPv4 CIDR",
 			cidr:        "192.168.1.0/24",
-			testIP:      "192.168.1.1",
+			testIP:      mustParseIP(t, "192.168.1.1"),
 			expected:    true,
 			expectError: false,
 		},
 		{
 			name:        "Valid IPv6 CIDR",
 			cidr:        "2001:db8::/32",
-			testIP:      "2001:db8::1",
+			testIP:      mustParseIP(t, "2001:db8::1"),
 			expected:    true,
 			expectError: false,
 		},
 		{
 			name:        "Invalid CIDR",
 			cidr:        "invalid-cidr",
-			testIP:      "",
+			testIP:      nil,
 			expected:    false,
 			expectError: true,
 		},
@@ -330,15 +336,15 @@ func TestBaseProvider_AddCIDRRange(t *testing.T) {
 				return
 			}
 
-			if tt.testIP != "" {
-				match, err := bp.CheckIP(tt.testIP)
+			if tt.testIP != nil {
+				match, err := bp.CheckParsedIP(tt.testIP)
 				if err != nil {
 					t.Errorf("Unexpected error checking IP: %v", err)
 					return
 				}
 
 				if match != tt.expected {
-					t.Errorf("Expected %v, got %v for IP %s", tt.expected, match, tt.testIP)
+					t.Errorf("Expected %v, got %v for IP %v", tt.expected, match, tt.testIP)
 				}
 			}
 		})
@@ -361,7 +367,7 @@ func TestBaseProvider_IPv4vsIPv6Separation(t *testing.T) {
 	bp.AddIPv6Range("2001:db8::/32")
 
 	// Test IPv4 doesn't match IPv6 tree and vice versa
-	v4Match, err := bp.CheckIP("192.168.1.1")
+	v4Match, err := bp.CheckParsedIP(mustParseIP(t, "192.168.1.1"))
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -369,7 +375,7 @@ func TestBaseProvider_IPv4vsIPv6Separation(t *testing.T) {
 		t.Error("IPv4 should match in IPv4 range")
 	}
 
-	v6Match, err := bp.CheckIP("2001:db8::1")
+	v6Match, err := bp.CheckParsedIP(mustParseIP(t, "2001:db8::1"))
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -378,7 +384,7 @@ func TestBaseProvider_IPv4vsIPv6Separation(t *testing.T) {
 	}
 
 	// Test that IPv4 doesn't match different range
-	v4NoMatch, err := bp.CheckIP("10.1.1.1")
+	v4NoMatch, err := bp.CheckParsedIP(mustParseIP(t, "10.1.1.1"))
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -409,7 +415,7 @@ func BenchmarkBaseProvider_RepeatedInitialize(b *testing.B) {
 	}
 }
 
-func BenchmarkBaseProvider_CheckIP_IPv4(b *testing.B) {
+func BenchmarkBaseProvider_CheckParsedIP_With100Ranges_IPv4(b *testing.B) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("BenchProvider", mockDM, func(bp *BaseProvider) error { return nil })
 
@@ -420,18 +426,19 @@ func BenchmarkBaseProvider_CheckIP_IPv4(b *testing.B) {
 		bp.AddIPv4Range(fmt.Sprintf("10.%d.0.0/24", i))
 	}
 
-	testIP := "10.50.0.1"
+	testIP := mustParseIP(b, "10.50.0.1")
 
+	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := bp.CheckIP(testIP)
+		_, err := bp.CheckParsedIP(testIP)
 		if err != nil {
 			b.Fatalf("Unexpected error: %v", err)
 		}
 	}
 }
 
-func BenchmarkBaseProvider_CheckIP_IPv6(b *testing.B) {
+func BenchmarkBaseProvider_CheckParsedIP_With100Ranges_IPv6(b *testing.B) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("BenchProvider", mockDM, func(bp *BaseProvider) error { return nil })
 
@@ -442,11 +449,12 @@ func BenchmarkBaseProvider_CheckIP_IPv6(b *testing.B) {
 		bp.AddIPv6Range(fmt.Sprintf("2001:db8:%x::/48", i))
 	}
 
-	testIP := "2001:db8:32::1"
+	testIP := mustParseIP(b, "2001:db8:32::1")
 
+	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := bp.CheckIP(testIP)
+		_, err := bp.CheckParsedIP(testIP)
 		if err != nil {
 			b.Fatalf("Unexpected error: %v", err)
 		}

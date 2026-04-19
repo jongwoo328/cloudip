@@ -9,7 +9,7 @@ import (
 
 type CloudProvider interface {
 	Initialize() error
-	CheckIP(ip string) (bool, error)
+	CheckParsedIP(parsedIP net.IP) (bool, error)
 	GetName() string
 }
 
@@ -40,17 +40,20 @@ func (bp *BaseProvider) GetName() string {
 	return bp.name
 }
 
-func (bp *BaseProvider) CheckIP(ip string) (bool, error) {
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
-		return false, fmt.Errorf("error parsing IP: %s", ip)
+func (bp *BaseProvider) CheckParsedIP(parsedIP net.IP) (bool, error) {
+	if parsedIP == nil {
+		return false, fmt.Errorf("error parsing IP: %v", parsedIP)
 	}
 
-	if parsedIp.To4() != nil {
-		return bp.v4Tree.Match(ip), nil
-	} else {
-		return bp.v6Tree.Match(ip), nil
+	if parsedIP.To4() != nil {
+		return bp.v4Tree.MatchParsedIP(parsedIP), nil
 	}
+
+	if parsedIP.To16() == nil {
+		return false, fmt.Errorf("error parsing IP: %v", parsedIP)
+	}
+
+	return bp.v6Tree.MatchParsedIP(parsedIP), nil
 }
 
 func (bp *BaseProvider) Initialize() error {
