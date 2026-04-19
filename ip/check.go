@@ -3,6 +3,8 @@ package ip
 import (
 	"cloudip/common"
 	"cloudip/ip/provider"
+	"fmt"
+	"net"
 )
 
 type IPChecker struct {
@@ -30,6 +32,11 @@ func (c *IPChecker) Check(ips []string) []common.Result {
 }
 
 func (c *IPChecker) checkCloudIp(ip string) (common.CloudProvider, error) {
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return "", fmt.Errorf("error parsing IP: %s", ip)
+	}
+
 	for _, providerType := range c.providerOrder {
 		p, exists := c.providers[providerType]
 		if !exists {
@@ -41,7 +48,7 @@ func (c *IPChecker) checkCloudIp(ip string) (common.CloudProvider, error) {
 			return "", err
 		}
 
-		isMatch, err := p.CheckIP(ip)
+		isMatch, err := p.CheckParsedIP(parsedIP)
 		if err != nil {
 			return "", err
 		}

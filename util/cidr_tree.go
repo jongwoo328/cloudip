@@ -49,18 +49,35 @@ func (tree *CIDRTree) Match(ip string) bool {
 		return false
 	}
 
-	// IPv6 full bit length; ipToBinary internally adjusts for IPv4
-	binaryIP := ipToBinary(parsedIP, net.IPv6len*8)
+	return tree.MatchParsedIP(parsedIP)
+}
+
+// MatchParsedIP verifies that the parsed IP belongs to one of the CIDRs in the tree.
+func (tree *CIDRTree) MatchParsedIP(parsedIP net.IP) bool {
+	if parsedIP == nil {
+		return false
+	}
+
+	ipBytes := parsedIP.To4()
+	if ipBytes == nil {
+		ipBytes = parsedIP.To16()
+		if ipBytes == nil {
+			return false
+		}
+	}
 
 	node := tree
-	for i := 0; i < len(binaryIP); i++ {
-		if node.IsLeaf {
-			return true
-		}
-		bit := binaryIP[i]
-		node = node.Children[bit]
-		if node == nil {
-			return false // No matching CIDR
+	for _, octet := range ipBytes {
+		for bitIndex := 7; bitIndex >= 0; bitIndex-- {
+			if node.IsLeaf {
+				return true
+			}
+
+			bit := (octet >> bitIndex) & 1
+			node = node.Children[bit]
+			if node == nil {
+				return false // No matching CIDR
+			}
 		}
 	}
 
