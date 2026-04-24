@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -21,24 +22,29 @@ var downloadClient = &http.Client{
 }
 
 func DownloadFromUrlToFile(url string, filePath string) error {
+	_, err := DownloadFromUrlToFileWithHeaders(url, filePath)
+	return err
+}
+
+func DownloadFromUrlToFileWithHeaders(url string, filePath string) (http.Header, error) {
 	resp, err := downloadClient.Get(url)
 	if err != nil {
 		PrintErrorTrace(ErrorWithInfo(err, "error downloading data file"))
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		err := ErrorWithInfo(fmt.Errorf("received non-200 status code: %s", resp.Status), "error downloading data file")
 		PrintErrorTrace(err)
-		return err
+		return nil, err
 	}
 
 	dataFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		err = ErrorWithInfo(err, "error opening data file")
 		PrintErrorTrace(err)
-		return err
+		return nil, err
 	}
 	defer dataFile.Close()
 
@@ -46,8 +52,31 @@ func DownloadFromUrlToFile(url string, filePath string) error {
 	if err != nil {
 		err = ErrorWithInfo(err, "error saving data file")
 		PrintErrorTrace(err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return resp.Header, nil
+}
+
+func DownloadJSONFromUrl[T any](url string, data *T) (http.Header, error) {
+	resp, err := downloadClient.Get(url)
+	if err != nil {
+		PrintErrorTrace(ErrorWithInfo(err, "error downloading JSON data"))
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		err := ErrorWithInfo(fmt.Errorf("received non-200 status code: %s", resp.Status), "error downloading JSON data")
+		PrintErrorTrace(err)
+		return nil, err
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(data); err != nil {
+		err = ErrorWithInfo(err, "error decoding JSON data")
+		PrintErrorTrace(err)
+		return nil, err
+	}
+
+	return resp.Header, nil
 }

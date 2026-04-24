@@ -8,4 +8,5 @@ var DefaultProviderOrder = []common.CloudProvider{
 	common.AWS,
 	common.GCP,
 	common.Azure,
+	common.Cloudflare,
 }

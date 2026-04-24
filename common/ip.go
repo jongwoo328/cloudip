@@ -7,16 +7,17 @@ type Result struct {
 }
 
 const (
-	AWS   CloudProvider = "aws"
-	GCP   CloudProvider = "gcp"
-	Azure CloudProvider = "azure"
+	AWS        CloudProvider = "aws"
+	GCP        CloudProvider = "gcp"
+	Azure      CloudProvider = "azure"
+	Cloudflare CloudProvider = "cloudflare"
 )
 
 type CloudProvider string
 
 type CloudMetadata struct {
-	Type         CloudProvider `json:"type"`
-	LastModified int64         `json:"lastModified"`
+	Type      CloudProvider `json:"type"`
+	Signature string        `json:"signature"`
 }
 
 type MetadataManager struct {

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 )
 
 type IpDataManagerGcp struct {
@@ -34,59 +33,58 @@ func (ipRange IpRangeDataGcp) IsEmpty() bool {
 		len(ipRange.Prefixes) == 0
 }
 
-func (ipDataManagerGcp *IpDataManagerGcp) GetLastModifiedUpstream() (time.Time, error) {
-	headers, err := util.GetHeadRequestHeader(ipDataManagerGcp.DataURI)
-	if err != nil {
-		err = util.ErrorWithInfo(err, "error getting header from request")
-		util.PrintErrorTrace(err)
-		return time.Time{}, err
-	}
-
-	lastModified := headers.Get("Last-Modified")
-	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
-	if err != nil {
-		err := util.ErrorWithInfo(err, "error parsing Date header")
-		util.PrintErrorTrace(err)
-		return time.Time{}, err
-	}
-
-	return lastModifiedDate, nil
-}
-
 func (ipDataManagerGcp *IpDataManagerGcp) downloadData() error {
 	common.VerboseOutput("Downloading GCP IP ranges...")
 	if ipDataManagerGcp.DataURI == "" {
 		return errors.New("cannot get DataURI")
 	}
-	err := util.DownloadFromUrlToFile(ipDataManagerGcp.DataURI, ipDataManagerGcp.DataFilePath)
+
+	gcpIpRangeData, err := ipDataManagerGcp.fetchData()
 	if err != nil {
 		return err
 	}
+	return ipDataManagerGcp.writeData(gcpIpRangeData)
+}
 
-	headers, err := util.GetHeadRequestHeader(ipDataManagerGcp.DataURI)
+func (ipDataManagerGcp *IpDataManagerGcp) fetchData() (*IpRangeDataGcp, error) {
+	gcpIpRangeData := IpRangeDataGcp{}
+	_, err := util.DownloadJSONFromUrl(ipDataManagerGcp.DataURI, &gcpIpRangeData)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error getting header from request")
+		return nil, err
+	}
+	return &gcpIpRangeData, nil
+}
+
+func (ipDataManagerGcp *IpDataManagerGcp) writeData(gcpIpRangeData *IpRangeDataGcp) error {
+	if gcpIpRangeData.SyncToken == "" {
+		return errors.New("cannot get syncToken")
+	}
+
+	ipDataFile, err := os.OpenFile(ipDataManagerGcp.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		err = util.ErrorWithInfo(err, "error opening data file")
 		util.PrintErrorTrace(err)
 		return err
 	}
-	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
-	if err != nil {
-		err = util.ErrorWithInfo(err, "error parsing Date header")
+	defer ipDataFile.Close()
+
+	if err := util.WriteJSON(ipDataFile, gcpIpRangeData); err != nil {
+		err = util.ErrorWithInfo(err, "error writing data file")
 		util.PrintErrorTrace(err)
 		return err
 	}
 
-	if metadataManager.Metadata.LastModified != currentLastModified.Unix() {
+	if metadataManager.IsSignatureExpired(gcpIpRangeData.SyncToken) {
 		metadata := common.CloudMetadata{
-			Type:         common.GCP,
-			LastModified: currentLastModified.Unix(),
+			Type:      common.GCP,
+			Signature: gcpIpRangeData.SyncToken,
 		}
 		if err := metadataManager.Write(&metadata); err != nil {
 			err = util.ErrorWithInfo(err, "error writing metadata")
 			util.PrintErrorTrace(err)
 			return err
 		}
-		common.VerboseOutput(fmt.Sprintf("GCP IP ranges updated [%s]", util.FormatToTimestamp(currentLastModified)))
+		common.VerboseOutput(fmt.Sprintf("GCP IP ranges updated [%s]", gcpIpRangeData.CreationTime))
 	}
 
 	return nil
@@ -100,15 +98,23 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(DataFilePathGcp) {
+	if !util.IsFileExists(ipDataManagerGcp.DataFilePath) {
 		common.VerboseOutput("GCP IP ranges file not exists.")
 		err := ipDataManagerGcp.downloadData()
 		return err
 	}
-	if isExpired() {
+
+	gcpIpRangeData, err := ipDataManagerGcp.fetchData()
+	if err != nil {
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from GCP server"))
+		return nil
+	}
+	if gcpIpRangeData.SyncToken == "" {
+		return errors.New("cannot get syncToken")
+	}
+	if metadataManager.IsSignatureExpired(gcpIpRangeData.SyncToken) {
 		common.VerboseOutput("GCP IP ranges are outdated. Updating to the latest version...")
-		err := ipDataManagerGcp.downloadData()
-		return err
+		return ipDataManagerGcp.writeData(gcpIpRangeData)
 	}
 	common.VerboseOutput("GCP IP ranges are up-to-date.")
 
@@ -120,24 +126,31 @@ func (ipDataManagerGcp *IpDataManagerGcp) LoadIpData() *IpRangeDataGcp {
 		return &ipDataManagerGcp.IpRange
 	}
 
-	gcpIpRangeData := IpRangeDataGcp{}
-	ipDataFile, err := os.Open(ipDataManagerGcp.DataFilePath)
+	gcpIpRangeData, err := ipDataManagerGcp.readDataFile()
 	if err != nil {
 		util.PrintErrorTrace(util.ErrorWithInfo(err, "error opening data file"))
 		util.PrintErrorTrace(err)
 		log.Fatal(err)
 	}
+
+	ipDataManagerGcp.IpRange = *gcpIpRangeData
+	return &ipDataManagerGcp.IpRange
+}
+
+func (ipDataManagerGcp *IpDataManagerGcp) readDataFile() (*IpRangeDataGcp, error) {
+	gcpIpRangeData := IpRangeDataGcp{}
+	ipDataFile, err := os.Open(ipDataManagerGcp.DataFilePath)
+	if err != nil {
+		return nil, util.ErrorWithInfo(err, "error opening data file")
+	}
 	defer ipDataFile.Close()
 
 	err = util.ReadJSON(ipDataFile, &gcpIpRangeData)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error reading data file")
-		util.PrintErrorTrace(err)
-		log.Fatal(err)
+		return nil, util.ErrorWithInfo(err, "error reading data file")
 	}
 
-	ipDataManagerGcp.IpRange = gcpIpRangeData
-	return &ipDataManagerGcp.IpRange
+	return &gcpIpRangeData, nil
 }
 
 var ipDataManagerGcp = &IpDataManagerGcp{

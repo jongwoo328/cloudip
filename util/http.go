@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -16,6 +17,9 @@ func GetHeadRequestHeader(url string) (http.Header, error) {
 	}
 	if err := resp.Body.Close(); err != nil {
 		return nil, ErrorWithInfo(err, "error closing response body")
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, ErrorWithInfo(fmt.Errorf("received non-200 status code: %s", resp.Status), "error getting head request header")
 	}
 
 	return resp.Header, nil

@@ -26,8 +26,4 @@ func NewAWSProvider() *AWSProvider {
 	}
 }
 
-func (ipDataManager *IpDataManagerAws) GetDataURL() string {
-	return ipDataManager.DataURI
-}
-
 var Provider = NewAWSProvider()

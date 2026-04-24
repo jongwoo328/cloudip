@@ -4,6 +4,7 @@ import (
 	"cloudip/util"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -15,8 +16,8 @@ func (m *MetadataManager) Ensure() error {
 		}
 
 		err := m.Write(&CloudMetadata{
-			Type:         m.Metadata.Type,
-			LastModified: 0,
+			Type:      m.Metadata.Type,
+			Signature: "",
 		})
 		if err != nil {
 			return util.ErrorWithInfo(err, "error writing metadata")
@@ -54,6 +55,14 @@ func (m *MetadataManager) Write(metadata *CloudMetadata) error {
 	return nil
 }
 
+func (m *MetadataManager) IsSignatureExpired(signature string) bool {
+	return signature != m.Metadata.Signature
+}
+
 func (m *MetadataManager) IsExpired(upstreamLastModified time.Time) bool {
-	return upstreamLastModified.Unix() != m.Metadata.LastModified
+	return m.IsSignatureExpired(LastModifiedSignature(upstreamLastModified))
+}
+
+func LastModifiedSignature(lastModified time.Time) string {
+	return strconv.FormatInt(lastModified.Unix(), 10)
 }

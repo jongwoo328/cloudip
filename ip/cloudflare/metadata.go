@@ -1,14 +1,14 @@
-package gcp
+package cloudflare
 
 import (
 	"cloudip/common"
 )
 
 var metadataManager = &common.MetadataManager{
-	MetadataFilePath: MetadataFilePathGcp,
+	MetadataFilePath: MetadataFilePathCloudflare,
 	ProviderDir:      ProviderDirectory,
 	Metadata: &common.CloudMetadata{
-		Type:      common.GCP,
+		Type:      common.Cloudflare,
 		Signature: "",
 	},
 }

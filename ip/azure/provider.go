@@ -30,8 +30,4 @@ func NewAzureProvider() *AzureProvider {
 	}
 }
 
-func (ipDataManager *IpDataManagerAzure) GetDataURL() string {
-	return ipDataManager.DataURI
-}
-
 var Provider = NewAzureProvider()

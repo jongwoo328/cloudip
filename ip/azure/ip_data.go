@@ -64,28 +64,23 @@ func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 	if ipDataManagerAzure.DataURI == "" {
 		return errors.New("cannot get DataURI")
 	}
-	err := util.DownloadFromUrlToFile(ipDataManagerAzure.DataURI, ipDataManagerAzure.DataFilePath)
+	headers, err := util.DownloadFromUrlToFileWithHeaders(ipDataManagerAzure.DataURI, ipDataManagerAzure.DataFilePath)
 	if err != nil {
 		return err
 	}
 
-	headers, err := util.GetHeadRequestHeader(ipDataManagerAzure.DataURI)
-	if err != nil {
-		err = util.ErrorWithInfo(err, "error getting header from request")
-		util.PrintErrorTrace(err)
-		return err
-	}
 	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
 	if err != nil {
 		err = util.ErrorWithInfo(err, "error parsing Date header")
 		util.PrintErrorTrace(err)
 		return err
 	}
+	signature := common.LastModifiedSignature(currentLastModified)
 
-	if metadataManager.Metadata.LastModified != currentLastModified.Unix() {
+	if metadataManager.IsSignatureExpired(signature) {
 		metadata := common.CloudMetadata{
-			Type:         common.Azure,
-			LastModified: currentLastModified.Unix(),
+			Type:      common.Azure,
+			Signature: signature,
 		}
 		if err := metadataManager.Write(&metadata); err != nil {
 			err = util.ErrorWithInfo(err, "error writing metadata")

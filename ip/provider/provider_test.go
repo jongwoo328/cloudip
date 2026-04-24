@@ -10,7 +10,6 @@ import (
 
 type mockDataManager struct {
 	shouldError bool
-	dataURL     string
 }
 
 func (m *mockDataManager) EnsureDataFile() error {
@@ -20,12 +19,8 @@ func (m *mockDataManager) EnsureDataFile() error {
 	return nil
 }
 
-func (m *mockDataManager) GetDataURL() string {
-	return m.dataURL
-}
-
 func TestNewBaseProvider(t *testing.T) {
-	mockDM := &mockDataManager{dataURL: "http://example.com"}
+	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
 
 	if bp.name != "TestProvider" {

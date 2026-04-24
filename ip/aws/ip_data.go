@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -41,23 +43,16 @@ func (ipRange IpRangeDataAws) IsEmpty() bool {
 		len(ipRange.Ipv6Prefixes) == 0
 }
 
-func (ipDataManagerAws *IpDataManagerAws) GetLastModifiedUpstream() (time.Time, error) {
+func (ipDataManagerAws *IpDataManagerAws) GetSignatureUpstream() (string, error) {
 	headers, err := util.GetHeadRequestHeader(ipDataManagerAws.DataURI)
 	if err != nil {
 		err = util.ErrorWithInfo(err, "error getting header from request")
 		util.PrintErrorTrace(err)
-		return time.Time{}, err
+		return "", err
 	}
 
-	lastModified := headers.Get("Last-Modified")
-	lastModifiedDate, err := time.Parse(time.RFC1123, lastModified)
-	if err != nil {
-		err := util.ErrorWithInfo(err, "error parsing Date header")
-		util.PrintErrorTrace(err)
-		return time.Time{}, err
-	}
-
-	return lastModifiedDate, nil
+	signature, _, err := awsSignatureFromHeaders(headers)
+	return signature, err
 }
 
 func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
@@ -66,28 +61,21 @@ func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
 		return errors.New("cannot get DataURI")
 	}
 
-	err := util.DownloadFromUrlToFile(ipDataManagerAws.DataURI, ipDataManagerAws.DataFilePath)
+	headers, err := util.DownloadFromUrlToFileWithHeaders(ipDataManagerAws.DataURI, ipDataManagerAws.DataFilePath)
 	if err != nil {
 		return err
 	}
 
-	headers, err := util.GetHeadRequestHeader(ipDataManagerAws.DataURI)
+	signature, currentLastModified, err := awsSignatureFromHeaders(headers)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error getting header from request")
-		util.PrintErrorTrace(err)
-		return err
-	}
-	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
-	if err != nil {
-		err = util.ErrorWithInfo(err, "error parsing Date header")
 		util.PrintErrorTrace(err)
 		return err
 	}
 
-	if metadataManager.Metadata.LastModified != currentLastModified.Unix() {
+	if metadataManager.IsSignatureExpired(signature) {
 		metadata := common.CloudMetadata{
-			Type:         common.AWS,
-			LastModified: currentLastModified.Unix(),
+			Type:      common.AWS,
+			Signature: signature,
 		}
 		if err := metadataManager.Write(&metadata); err != nil {
 			err = util.ErrorWithInfo(err, "error writing metadata")
@@ -98,6 +86,21 @@ func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
 	}
 
 	return nil
+}
+
+func awsSignatureFromHeaders(headers http.Header) (string, time.Time, error) {
+	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
+	if err != nil {
+		return "", time.Time{}, util.ErrorWithInfo(err, "error parsing Date header")
+	}
+
+	signature := strings.TrimSpace(headers.Get("ETag"))
+	signature = strings.TrimPrefix(signature, "W/")
+	signature = strings.Trim(signature, "\"")
+	if signature == "" {
+		signature = common.LastModifiedSignature(currentLastModified)
+	}
+	return signature, currentLastModified, nil
 }
 
 func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {

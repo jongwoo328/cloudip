@@ -33,6 +33,7 @@ This project is currently under development, and features and options may change
 - **AWS**: Amazon Web Services
 - **GCP**: Google Cloud Platform
 - **Azure**: Microsoft Azure
+- **Cloudflare**: Cloudflare, Inc.
 
 ## Installation
 ### Homebrew (macOS only)

@@ -26,8 +26,4 @@ func NewGCPProvider() *GCPProvider {
 	}
 }
 
-func (ipDataManager *IpDataManagerGcp) GetDataURL() string {
-	return ipDataManager.DataURI
-}
-
 var Provider = NewGCPProvider()

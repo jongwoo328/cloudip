@@ -9,8 +9,8 @@ var metadataManager = &common.MetadataManager{
 	MetadataFilePath: MetadataFilePathAzure,
 	ProviderDir:      ProviderDirectory,
 	Metadata: &common.CloudMetadata{
-		Type:         common.Azure,
-		LastModified: 0,
+		Type:      common.Azure,
+		Signature: "",
 	},
 }
 
