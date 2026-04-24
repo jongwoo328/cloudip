@@ -33,17 +33,6 @@ func (ipRange IpRangeDataGcp) IsEmpty() bool {
 		len(ipRange.Prefixes) == 0
 }
 
-func (ipDataManagerGcp *IpDataManagerGcp) GetSignatureUpstream() (string, error) {
-	gcpIpRangeData, err := ipDataManagerGcp.fetchData()
-	if err != nil {
-		return "", err
-	}
-	if gcpIpRangeData.SyncToken == "" {
-		return "", errors.New("cannot get syncToken")
-	}
-	return gcpIpRangeData.SyncToken, nil
-}
-
 func (ipDataManagerGcp *IpDataManagerGcp) downloadData() error {
 	common.VerboseOutput("Downloading GCP IP ranges...")
 	if ipDataManagerGcp.DataURI == "" {
@@ -109,15 +98,23 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(DataFilePathGcp) {
+	if !util.IsFileExists(ipDataManagerGcp.DataFilePath) {
 		common.VerboseOutput("GCP IP ranges file not exists.")
 		err := ipDataManagerGcp.downloadData()
 		return err
 	}
-	if isExpired() {
+
+	gcpIpRangeData, err := ipDataManagerGcp.fetchData()
+	if err != nil {
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from GCP server"))
+		return nil
+	}
+	if gcpIpRangeData.SyncToken == "" {
+		return errors.New("cannot get syncToken")
+	}
+	if metadataManager.IsSignatureExpired(gcpIpRangeData.SyncToken) {
 		common.VerboseOutput("GCP IP ranges are outdated. Updating to the latest version...")
-		err := ipDataManagerGcp.downloadData()
-		return err
+		return ipDataManagerGcp.writeData(gcpIpRangeData)
 	}
 	common.VerboseOutput("GCP IP ranges are up-to-date.")
 

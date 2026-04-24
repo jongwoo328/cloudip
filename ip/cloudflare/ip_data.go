@@ -37,14 +37,6 @@ func (ipRange IpRangeDataCloudflare) IsEmpty() bool {
 	return len(ipRange.V4CIDRs) == 0 && len(ipRange.V6CIDRs) == 0
 }
 
-func (m *IpDataManagerCloudflare) GetSignatureUpstream() (string, error) {
-	data, err := m.fetchData()
-	if err != nil {
-		return "", err
-	}
-	return data.signature()
-}
-
 func (m *IpDataManagerCloudflare) downloadData() error {
 	common.VerboseOutput("Downloading Cloudflare IP ranges...")
 	if m.DataURI == "" {
@@ -114,9 +106,19 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 		common.VerboseOutput("Cloudflare IP ranges file not exists.")
 		return m.downloadData()
 	}
-	if isExpired() {
+
+	data, err := m.fetchData()
+	if err != nil {
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from Cloudflare"))
+		return nil
+	}
+	signature, err := data.signature()
+	if err != nil {
+		return err
+	}
+	if metadataManager.IsSignatureExpired(signature) {
 		common.VerboseOutput("Cloudflare IP ranges are outdated. Updating to the latest version...")
-		return m.downloadData()
+		return m.writeData(data)
 	}
 	common.VerboseOutput("Cloudflare IP ranges are up-to-date.")
 
