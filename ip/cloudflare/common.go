@@ -13,6 +13,7 @@ const DataFileV6 = "cloudflare-v6.txt"
 const MetadataFile = ".metadata.json"
 
 func getDataUrl() string {
+	// /client/v4 is the Cloudflare API version, not an IPv4-only endpoint.
 	return "https://api.cloudflare.com/client/v4/ips"
 }
 
