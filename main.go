@@ -6,6 +6,7 @@ import (
 	"cloudip/ip"
 	"cloudip/ip/aws"
 	"cloudip/ip/azure"
+	"cloudip/ip/cloudflare"
 	"cloudip/ip/gcp"
 	"cloudip/ip/provider"
 	"cloudip/util"
@@ -18,9 +19,10 @@ func main() {
 	flags := &common.CloudIpFlag{}
 	checker := ip.NewIPChecker(
 		map[common.CloudProvider]provider.CloudProvider{
-			common.AWS:   aws.Provider,
-			common.GCP:   gcp.Provider,
-			common.Azure: azure.Provider,
+			common.AWS:        aws.Provider,
+			common.GCP:        gcp.Provider,
+			common.Azure:      azure.Provider,
+			common.Cloudflare: cloudflare.Provider,
 		},
 		ip.DefaultProviderOrder,
 	)

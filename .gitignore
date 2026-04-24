@@ -122,3 +122,5 @@ build/
 .tasks/
 
 .gocache/
+
+.claude/

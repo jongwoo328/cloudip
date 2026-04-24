@@ -33,6 +33,7 @@
 - AWS (Amazon Web Services)
 - GCP (Google Cloud Platform)
 - Azure (Microsoft Azure)
+- Cloudflare (Cloudflare, Inc.)
 
 ## 설치
 ### Homebrew (macOS 전용)

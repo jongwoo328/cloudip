@@ -1,4 +1,4 @@
-package aws
+package cloudflare
 
 import (
 	"cloudip/common"
@@ -6,18 +6,18 @@ import (
 )
 
 var metadataManager = &common.MetadataManager{
-	MetadataFilePath: MetadataFilePathAws,
+	MetadataFilePath: MetadataFilePathCloudflare,
 	ProviderDir:      ProviderDirectory,
 	Metadata: &common.CloudMetadata{
-		Type:      common.AWS,
+		Type:      common.Cloudflare,
 		Signature: "",
 	},
 }
 
 func isExpired() bool {
-	signature, err := ipDataManagerAws.GetSignatureUpstream()
+	signature, err := ipDataManagerCloudflare.GetSignatureUpstream()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from AWS server"))
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from Cloudflare"))
 		return false
 	}
 	return metadataManager.IsSignatureExpired(signature)

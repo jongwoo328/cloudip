@@ -9,16 +9,16 @@ var metadataManager = &common.MetadataManager{
 	MetadataFilePath: MetadataFilePathGcp,
 	ProviderDir:      ProviderDirectory,
 	Metadata: &common.CloudMetadata{
-		Type:         common.GCP,
-		LastModified: 0,
+		Type:      common.GCP,
+		Signature: "",
 	},
 }
 
 func isExpired() bool {
-	lastModifiedDate, err := ipDataManagerGcp.GetLastModifiedUpstream()
+	signature, err := ipDataManagerGcp.GetSignatureUpstream()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting last modified time from GCP server"))
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from GCP server"))
 		return false
 	}
-	return metadataManager.IsExpired(lastModifiedDate)
+	return metadataManager.IsSignatureExpired(signature)
 }

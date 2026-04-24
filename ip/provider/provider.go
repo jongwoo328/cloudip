@@ -15,7 +15,6 @@ type CloudProvider interface {
 
 type DataManager interface {
 	EnsureDataFile() error
-	GetDataURL() string
 }
 
 type BaseProvider struct {
