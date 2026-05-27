@@ -7,7 +7,7 @@ import (
 )
 
 var headClient = &http.Client{
-	Timeout: 5 * time.Second,
+	Timeout: 10 * time.Second,
 }
 
 func GetHeadRequestHeader(url string) (http.Header, error) {
