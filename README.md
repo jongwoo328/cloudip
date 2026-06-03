@@ -39,6 +39,7 @@ This project is currently under development, and features and options may change
 ### Homebrew (macOS only)
 ```shell
 brew tap jongwoo328/cloudip
+brew trust --tap jongwoo328/cloudip
 brew install cloudip
 ```
 
