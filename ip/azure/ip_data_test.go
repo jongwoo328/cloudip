@@ -1,6 +1,7 @@
 package azure
 
 import (
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -40,5 +41,16 @@ func TestAzureEnsureDataURIConcurrentAccess(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ensureDataURI returned unexpected error: %v", err)
 		}
+	}
+}
+
+func TestAzureLoadIpDataReturnsErrorForMissingFile(t *testing.T) {
+	dir := t.TempDir()
+	manager := &IpDataManagerAzure{
+		DataFilePath: filepath.Join(dir, "missing.json"),
+	}
+
+	if _, err := manager.LoadIpData(); err == nil {
+		t.Fatal("LoadIpData() error = nil, want error")
 	}
 }

@@ -11,7 +11,10 @@ type CloudflareProvider struct {
 func NewCloudflareProvider() *CloudflareProvider {
 	return &CloudflareProvider{
 		BaseProvider: provider.NewBaseProvider("Cloudflare", ipDataManagerCloudflare, func(bp *provider.BaseProvider) error {
-			data := *ipDataManagerCloudflare.LoadIpData()
+			data, err := ipDataManagerCloudflare.LoadIpData()
+			if err != nil {
+				return err
+			}
 
 			for _, cidr := range data.V4CIDRs {
 				bp.AddIPv4Range(cidr)

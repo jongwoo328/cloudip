@@ -5,7 +5,6 @@ import (
 	"cloudip/util"
 	"errors"
 	"io"
-	"log"
 	"os"
 	"strings"
 )
@@ -125,34 +124,39 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 	return nil
 }
 
-func (m *IpDataManagerCloudflare) LoadIpData() *IpRangeDataCloudflare {
+func (m *IpDataManagerCloudflare) LoadIpData() (*IpRangeDataCloudflare, error) {
 	if !m.IpRange.IsEmpty() {
-		return &m.IpRange
+		return &m.IpRange, nil
+	}
+
+	v4CIDRs, err := readCIDRLines(m.DataFilePathV4)
+	if err != nil {
+		return nil, err
+	}
+	v6CIDRs, err := readCIDRLines(m.DataFilePathV6)
+	if err != nil {
+		return nil, err
 	}
 
 	data := IpRangeDataCloudflare{
-		V4CIDRs: readCIDRLines(m.DataFilePathV4),
-		V6CIDRs: readCIDRLines(m.DataFilePathV6),
+		V4CIDRs: v4CIDRs,
+		V6CIDRs: v6CIDRs,
 	}
 
 	m.IpRange = data
-	return &m.IpRange
+	return &m.IpRange, nil
 }
 
-func readCIDRLines(path string) []string {
+func readCIDRLines(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error opening data file")
-		util.PrintErrorTrace(err)
-		log.Fatal(err)
+		return nil, util.ErrorWithInfo(err, "error opening data file")
 	}
 	defer file.Close()
 
 	content, err := io.ReadAll(file)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error reading data file")
-		util.PrintErrorTrace(err)
-		log.Fatal(err)
+		return nil, util.ErrorWithInfo(err, "error reading data file")
 	}
 
 	lines := strings.Split(string(content), "\n")
@@ -164,7 +168,7 @@ func readCIDRLines(path string) []string {
 		}
 		cidrs = append(cidrs, trimmed)
 	}
-	return cidrs
+	return cidrs, nil
 }
 
 func writeCIDRLines(path string, cidrs []string) error {

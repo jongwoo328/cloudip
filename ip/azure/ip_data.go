@@ -5,7 +5,6 @@ import (
 	"cloudip/util"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"time"
@@ -142,29 +141,25 @@ func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 	return nil
 }
 
-func (ipDataManagerAzure *IpDataManagerAzure) LoadIpData() *IpRangeDataAzure {
+func (ipDataManagerAzure *IpDataManagerAzure) LoadIpData() (*IpRangeDataAzure, error) {
 	if !ipDataManagerAzure.IpRange.IsEmpty() {
-		return &ipDataManagerAzure.IpRange
+		return &ipDataManagerAzure.IpRange, nil
 	}
 
 	azureIpRangeData := IpRangeDataAzure{}
 	ipDataFile, err := os.Open(ipDataManagerAzure.DataFilePath)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error loading data file")
-		util.PrintErrorTrace(err)
-		log.Fatal(err)
+		return nil, util.ErrorWithInfo(err, "error loading data file")
 	}
 	defer ipDataFile.Close()
 
 	err = util.ReadJSON(ipDataFile, &azureIpRangeData)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error reading data file")
-		util.PrintErrorTrace(err)
-		log.Fatal(err)
+		return nil, util.ErrorWithInfo(err, "error reading data file")
 	}
 
 	ipDataManagerAzure.IpRange = azureIpRangeData
-	return &ipDataManagerAzure.IpRange
+	return &ipDataManagerAzure.IpRange, nil
 }
 
 var ipDataManagerAzure = &IpDataManagerAzure{

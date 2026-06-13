@@ -55,3 +55,14 @@ func TestGCPEnsureDataFileReusesFetchedDataForUpdate(t *testing.T) {
 		t.Fatalf("metadata signature = %q, want %q", metadataManager.Metadata.Signature, "new-sync-token")
 	}
 }
+
+func TestGCPLoadIpDataReturnsErrorForMissingFile(t *testing.T) {
+	dir := t.TempDir()
+	manager := &IpDataManagerGcp{
+		DataFilePath: filepath.Join(dir, "missing.json"),
+	}
+
+	if _, err := manager.LoadIpData(); err == nil {
+		t.Fatal("LoadIpData() error = nil, want error")
+	}
+}
