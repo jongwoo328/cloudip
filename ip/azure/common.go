@@ -8,6 +8,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var appDir = util.GetAppDir(common.AppName)
@@ -17,11 +18,14 @@ const MetadataFile = ".metadata.json"
 
 var dataRequestOnce sync.Once
 var dataUrl string = "" // return empty string when error
+var dataURLClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
 
 func getDataUrl() string {
 	dataRequestOnce.Do(func() {
 
-		resp, err := http.Get("https://www.microsoft.com/en-us/download/details.aspx?id=56519")
+		resp, err := dataURLClient.Get("https://www.microsoft.com/en-us/download/details.aspx?id=56519")
 		if err != nil {
 			util.PrintErrorTrace(util.ErrorWithInfo(err, "error checking metadata file expiration"))
 			return

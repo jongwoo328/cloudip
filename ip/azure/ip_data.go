@@ -35,12 +35,30 @@ type IpRangeDataAzure struct {
 	} `json:"values"`
 }
 
+func (ipDataManagerAzure *IpDataManagerAzure) ensureDataURI() error {
+	if ipDataManagerAzure.DataURI != "" {
+		return nil
+	}
+
+	dataURI := getDataUrl()
+	if dataURI == "" {
+		return errors.New("cannot get DataURI")
+	}
+
+	ipDataManagerAzure.DataURI = dataURI
+	return nil
+}
+
 func (ipRange IpRangeDataAzure) IsEmpty() bool {
 	return ipRange.ChangeNumber == 0 &&
 		len(ipRange.Values) == 0
 }
 
 func (ipDataManagerAzure *IpDataManagerAzure) GetLastModifiedUpstream() (time.Time, error) {
+	if err := ipDataManagerAzure.ensureDataURI(); err != nil {
+		return time.Time{}, err
+	}
+
 	headers, err := util.GetHeadRequestHeader(ipDataManagerAzure.DataURI)
 	if err != nil {
 		err = util.ErrorWithInfo(err, "error getting header from request")
@@ -61,9 +79,11 @@ func (ipDataManagerAzure *IpDataManagerAzure) GetLastModifiedUpstream() (time.Ti
 
 func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 	common.VerboseOutput("Downloading Azure IP ranges...")
-	if ipDataManagerAzure.DataURI == "" {
-		return errors.New("cannot get DataURI")
+
+	if err := ipDataManagerAzure.ensureDataURI(); err != nil {
+		return err
 	}
+
 	headers, err := util.DownloadFromUrlToFileWithHeaders(ipDataManagerAzure.DataURI, ipDataManagerAzure.DataFilePath)
 	if err != nil {
 		return err
@@ -143,7 +163,6 @@ func (ipDataManagerAzure *IpDataManagerAzure) LoadIpData() *IpRangeDataAzure {
 }
 
 var ipDataManagerAzure = &IpDataManagerAzure{
-	DataURI:      getDataUrl(),
 	DataFile:     DataFile,
 	DataFilePath: DataFilePathAzure,
 	IpRange:      IpRangeDataAzure{},
