@@ -31,7 +31,7 @@ func TestNewBaseProvider(t *testing.T) {
 		t.Error("DataManager not set correctly")
 	}
 
-	if bp.initialized {
+	if bp.initialized.Load() {
 		t.Error("Provider should not be initialized by default")
 	}
 }
@@ -74,7 +74,7 @@ func TestBaseProvider_Initialize(t *testing.T) {
 				if err == nil {
 					t.Error("Expected error but got none")
 				}
-				if bp.initialized {
+				if bp.initialized.Load() {
 					t.Error("Provider should not be initialized after error")
 				}
 				return
@@ -84,7 +84,7 @@ func TestBaseProvider_Initialize(t *testing.T) {
 				t.Errorf("Unexpected error: %v", err)
 			}
 
-			if !bp.initialized {
+			if !bp.initialized.Load() {
 				t.Error("Provider should be initialized after successful Initialize()")
 			}
 
@@ -115,7 +115,7 @@ func TestBaseProvider_InitializeIdempotent(t *testing.T) {
 		t.Errorf("Second initialization failed: %v", err2)
 	}
 
-	if !bp.initialized {
+	if !bp.initialized.Load() {
 		t.Error("Provider should remain initialized")
 	}
 }
@@ -148,8 +148,21 @@ func TestBaseProvider_ConcurrentInitialize(t *testing.T) {
 		}
 	}
 
-	if !bp.initialized {
+	if !bp.initialized.Load() {
 		t.Error("Provider should be initialized after concurrent calls")
+	}
+}
+
+func TestBaseProvider_CheckParsedIPRequiresInitialize(t *testing.T) {
+	mockDM := &mockDataManager{}
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
+
+	match, err := bp.CheckParsedIP(mustParseIP(t, "192.168.1.1"))
+	if err == nil {
+		t.Fatal("Expected error for uninitialized provider")
+	}
+	if match {
+		t.Fatal("Uninitialized provider should not match")
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 )
 
 type CloudProvider interface {
@@ -21,7 +22,7 @@ type BaseProvider struct {
 	name        string
 	v4Tree      *util.CIDRTree
 	v6Tree      *util.CIDRTree
-	initialized bool
+	initialized atomic.Bool
 	initLock    sync.Mutex
 	dataManager DataManager
 	loadFunc    func(*BaseProvider) error
@@ -40,6 +41,10 @@ func (bp *BaseProvider) GetName() string {
 }
 
 func (bp *BaseProvider) CheckParsedIP(parsedIP net.IP) (bool, error) {
+	if !bp.initialized.Load() {
+		return false, fmt.Errorf("provider %s is not initialized", bp.name)
+	}
+
 	if parsedIP == nil {
 		return false, fmt.Errorf("error parsing IP: %v", parsedIP)
 	}
@@ -56,14 +61,14 @@ func (bp *BaseProvider) CheckParsedIP(parsedIP net.IP) (bool, error) {
 }
 
 func (bp *BaseProvider) Initialize() error {
-	if bp.initialized {
+	if bp.initialized.Load() {
 		return nil
 	}
 
 	bp.initLock.Lock()
 	defer bp.initLock.Unlock()
 
-	if bp.initialized {
+	if bp.initialized.Load() {
 		return nil
 	}
 
@@ -79,7 +84,7 @@ func (bp *BaseProvider) Initialize() error {
 		return err
 	}
 
-	bp.initialized = true
+	bp.initialized.Store(true)
 	return nil
 }
 
