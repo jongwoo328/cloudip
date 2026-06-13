@@ -5,7 +5,6 @@ import (
 	"cloudip/util"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -121,20 +120,18 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 	return nil
 }
 
-func (ipDataManagerGcp *IpDataManagerGcp) LoadIpData() *IpRangeDataGcp {
+func (ipDataManagerGcp *IpDataManagerGcp) LoadIpData() (*IpRangeDataGcp, error) {
 	if !ipDataManagerGcp.IpRange.IsEmpty() {
-		return &ipDataManagerGcp.IpRange
+		return &ipDataManagerGcp.IpRange, nil
 	}
 
 	gcpIpRangeData, err := ipDataManagerGcp.readDataFile()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error opening data file"))
-		util.PrintErrorTrace(err)
-		log.Fatal(err)
+		return nil, err
 	}
 
 	ipDataManagerGcp.IpRange = *gcpIpRangeData
-	return &ipDataManagerGcp.IpRange
+	return &ipDataManagerGcp.IpRange, nil
 }
 
 func (ipDataManagerGcp *IpDataManagerGcp) readDataFile() (*IpRangeDataGcp, error) {

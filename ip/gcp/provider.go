@@ -11,7 +11,10 @@ type GCPProvider struct {
 func NewGCPProvider() *GCPProvider {
 	return &GCPProvider{
 		BaseProvider: provider.NewBaseProvider("GCP", ipDataManagerGcp, func(bp *provider.BaseProvider) error {
-			gcpIpRangeData := *ipDataManagerGcp.LoadIpData()
+			gcpIpRangeData, err := ipDataManagerGcp.LoadIpData()
+			if err != nil {
+				return err
+			}
 
 			for _, prefix := range gcpIpRangeData.Prefixes {
 				if prefix.Ipv4Prefix != "" {

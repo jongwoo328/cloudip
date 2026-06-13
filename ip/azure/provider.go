@@ -13,7 +13,10 @@ type AzureProvider struct {
 func NewAzureProvider() *AzureProvider {
 	return &AzureProvider{
 		BaseProvider: provider.NewBaseProvider("Azure", ipDataManagerAzure, func(bp *provider.BaseProvider) error {
-			azureIpRangeData := *ipDataManagerAzure.LoadIpData()
+			azureIpRangeData, err := ipDataManagerAzure.LoadIpData()
+			if err != nil {
+				return err
+			}
 
 			for _, dataObject := range azureIpRangeData.Values {
 				for _, prefix := range dataObject.Properties.AddressPrefixes {

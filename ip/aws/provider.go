@@ -11,7 +11,10 @@ type AWSProvider struct {
 func NewAWSProvider() *AWSProvider {
 	return &AWSProvider{
 		BaseProvider: provider.NewBaseProvider("AWS", ipDataManagerAws, func(bp *provider.BaseProvider) error {
-			awsIpRangeData := *ipDataManagerAws.LoadIpData()
+			awsIpRangeData, err := ipDataManagerAws.LoadIpData()
+			if err != nil {
+				return err
+			}
 
 			for _, prefix := range awsIpRangeData.Prefixes {
 				bp.AddIPv4Range(prefix.IpPrefix)

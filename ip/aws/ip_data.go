@@ -5,7 +5,6 @@ import (
 	"cloudip/util"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -128,29 +127,25 @@ func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 	return nil
 }
 
-func (ipDataManagerAws *IpDataManagerAws) LoadIpData() *IpRangeDataAws {
+func (ipDataManagerAws *IpDataManagerAws) LoadIpData() (*IpRangeDataAws, error) {
 	if !ipDataManagerAws.IpRange.IsEmpty() {
-		return &ipDataManagerAws.IpRange
+		return &ipDataManagerAws.IpRange, nil
 	}
 
 	awsIpRangeData := IpRangeDataAws{}
 	ipDataFile, err := os.Open(ipDataManagerAws.DataFilePath)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error opening data file")
-		util.PrintErrorTrace(err)
-		log.Fatal(err)
+		return nil, util.ErrorWithInfo(err, "error opening data file")
 	}
 	defer ipDataFile.Close()
 
 	err = util.ReadJSON(ipDataFile, &awsIpRangeData)
 	if err != nil {
-		err = util.ErrorWithInfo(err, "error reading data file")
-		util.PrintErrorTrace(err)
-		log.Fatal(err)
+		return nil, util.ErrorWithInfo(err, "error reading data file")
 	}
 
 	ipDataManagerAws.IpRange = awsIpRangeData
-	return &ipDataManagerAws.IpRange
+	return &ipDataManagerAws.IpRange, nil
 }
 
 var ipDataManagerAws = &IpDataManagerAws{

@@ -71,7 +71,10 @@ func TestCloudflareDownloadDataWritesCIDRsAndSignature(t *testing.T) {
 		t.Fatalf("metadata signature = %q, want %q", metadataManager.Metadata.Signature, "cf-etag")
 	}
 
-	data := manager.LoadIpData()
+	data, err := manager.LoadIpData()
+	if err != nil {
+		t.Fatalf("LoadIpData() error = %v", err)
+	}
 	if len(data.V4CIDRs) != 1 || data.V4CIDRs[0] != "173.245.48.0/20" {
 		t.Fatalf("V4CIDRs = %#v, want Cloudflare IPv4 CIDR", data.V4CIDRs)
 	}
@@ -130,5 +133,17 @@ func TestCloudflareEnsureDataFileReusesFetchedDataForUpdate(t *testing.T) {
 	}
 	if metadataManager.Metadata.Signature != "new-etag" {
 		t.Fatalf("metadata signature = %q, want %q", metadataManager.Metadata.Signature, "new-etag")
+	}
+}
+
+func TestCloudflareLoadIpDataReturnsErrorForMissingFile(t *testing.T) {
+	dir := t.TempDir()
+	manager := &IpDataManagerCloudflare{
+		DataFilePathV4: filepath.Join(dir, "missing-v4.txt"),
+		DataFilePathV6: filepath.Join(dir, "missing-v6.txt"),
+	}
+
+	if _, err := manager.LoadIpData(); err == nil {
+		t.Fatal("LoadIpData() error = nil, want error")
 	}
 }
