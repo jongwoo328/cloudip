@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type IpDataManagerAzure struct {
 	DataFile     string
 	DataFilePath string
 	IpRange      IpRangeDataAzure
+	dataURIMu    sync.Mutex
 }
 
 type IpRangeDataAzure struct {
@@ -36,6 +38,9 @@ type IpRangeDataAzure struct {
 }
 
 func (ipDataManagerAzure *IpDataManagerAzure) ensureDataURI() error {
+	ipDataManagerAzure.dataURIMu.Lock()
+	defer ipDataManagerAzure.dataURIMu.Unlock()
+
 	if ipDataManagerAzure.DataURI != "" {
 		return nil
 	}
