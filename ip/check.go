@@ -3,6 +3,7 @@ package ip
 import (
 	"cloudip/common"
 	"cloudip/ip/provider"
+	"errors"
 	"fmt"
 	"net"
 )
@@ -37,6 +38,7 @@ func (c *IPChecker) checkCloudIp(ip string) (common.CloudProvider, error) {
 		return "", fmt.Errorf("error parsing IP: %s", ip)
 	}
 
+	var providerErr error
 	for _, providerType := range c.providerOrder {
 		p, exists := c.providers[providerType]
 		if !exists {
@@ -45,17 +47,19 @@ func (c *IPChecker) checkCloudIp(ip string) (common.CloudProvider, error) {
 
 		err := p.Initialize()
 		if err != nil {
-			return "", err
+			providerErr = errors.Join(providerErr, fmt.Errorf("%s initialize: %w", providerType, err))
+			continue
 		}
 
 		isMatch, err := p.CheckParsedIP(parsedIP)
 		if err != nil {
-			return "", err
+			providerErr = errors.Join(providerErr, fmt.Errorf("%s check: %w", providerType, err))
+			continue
 		}
 
 		if isMatch {
 			return providerType, nil
 		}
 	}
-	return "", nil
+	return "", providerErr
 }
