@@ -153,6 +153,19 @@ func TestBaseProvider_ConcurrentInitialize(t *testing.T) {
 	}
 }
 
+func TestBaseProvider_CheckParsedIPRequiresInitialize(t *testing.T) {
+	mockDM := &mockDataManager{}
+	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
+
+	match, err := bp.CheckParsedIP(mustParseIP(t, "192.168.1.1"))
+	if err == nil {
+		t.Fatal("Expected error for uninitialized provider")
+	}
+	if match {
+		t.Fatal("Uninitialized provider should not match")
+	}
+}
+
 func mustParseIP(tb testing.TB, raw string) net.IP {
 	tb.Helper()
 

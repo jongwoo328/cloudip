@@ -41,6 +41,10 @@ func (bp *BaseProvider) GetName() string {
 }
 
 func (bp *BaseProvider) CheckParsedIP(parsedIP net.IP) (bool, error) {
+	if !bp.initialized.Load() {
+		return false, fmt.Errorf("provider %s is not initialized", bp.name)
+	}
+
 	if parsedIP == nil {
 		return false, fmt.Errorf("error parsing IP: %v", parsedIP)
 	}
