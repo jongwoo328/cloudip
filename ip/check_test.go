@@ -128,6 +128,33 @@ func TestCheckerCheck(t *testing.T) {
 			},
 			expectError: true,
 		},
+		{
+			name: "Initialization error continues to next provider",
+			ip:   "10.1.1.1",
+			mockProviders: map[common.CloudProvider]provider.CloudProvider{
+				common.AWS: newMockProvider("AWS", true, false, true),
+				common.GCP: newMockProvider("GCP", true, false, false),
+			},
+			expectedProvider: common.GCP,
+		},
+		{
+			name: "CheckParsedIP error continues to next provider",
+			ip:   "10.1.1.1",
+			mockProviders: map[common.CloudProvider]provider.CloudProvider{
+				common.AWS: newMockProvider("AWS", true, true, false),
+				common.GCP: newMockProvider("GCP", true, false, false),
+			},
+			expectedProvider: common.GCP,
+		},
+		{
+			name: "Provider errors return error when no provider matches",
+			ip:   "10.1.1.1",
+			mockProviders: map[common.CloudProvider]provider.CloudProvider{
+				common.AWS: newMockProvider("AWS", true, false, true),
+				common.GCP: newMockProvider("GCP", true, true, false),
+			},
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
