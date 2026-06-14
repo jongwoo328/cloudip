@@ -11,19 +11,16 @@ import (
 type IPChecker struct {
 	providers     map[common.CloudProvider]provider.CloudProvider
 	providerOrder []common.CloudProvider
-	updatePolicy  common.UpdatePolicy
 }
 
 func NewIPChecker(providers map[common.CloudProvider]provider.CloudProvider, order []common.CloudProvider) *IPChecker {
 	return &IPChecker{
 		providers:     providers,
 		providerOrder: order,
-		updatePolicy:  common.DefaultUpdatePolicy(),
 	}
 }
 
-func (c *IPChecker) SetUpdatePolicy(policy common.UpdatePolicy) {
-	c.updatePolicy = policy
+func (c *IPChecker) applyUpdatePolicy(policy common.UpdatePolicy) {
 	for _, p := range c.providers {
 		if setter, ok := p.(provider.UpdatePolicySetter); ok {
 			setter.SetUpdatePolicy(policy)
@@ -31,7 +28,9 @@ func (c *IPChecker) SetUpdatePolicy(policy common.UpdatePolicy) {
 	}
 }
 
-func (c *IPChecker) Check(ips []string) []common.Result {
+func (c *IPChecker) Check(ips []string, policy common.UpdatePolicy) []common.Result {
+	c.applyUpdatePolicy(policy)
+
 	results := make([]common.Result, len(ips))
 
 	for index, ip := range ips {

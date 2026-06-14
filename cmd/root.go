@@ -20,11 +20,9 @@ func NewRootCmd(flags *common.CloudIpFlag, checker *ip.IPChecker) *cobra.Command
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.SetVerbose(flags.Verbose)
-			checker.SetUpdatePolicy(common.UpdatePolicy{
-				NoUpdate: flags.NoUpdate,
-				TTL:      common.DefaultUpdateCheckTTL,
-			})
-			result := checker.Check(args)
+			policy := common.DefaultUpdatePolicy()
+			policy.NoUpdate = flags.NoUpdate
+			result := checker.Check(args, policy)
 			if err := printResult(cmd.OutOrStdout(), result, flags); err != nil {
 				return err
 			}
