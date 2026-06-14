@@ -74,7 +74,7 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 
 			var err error
 			output := captureStdout(t, func() {
-				err = printResult(&results, flags)
+				err = printResult(results, flags)
 			})
 
 			if err != nil {
@@ -94,7 +94,7 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 
 		var err error
 		output := captureStdout(t, func() {
-			err = printResult(&results, flags)
+			err = printResult(results, flags)
 		})
 
 		if err != nil {
@@ -110,7 +110,7 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		_, flags := newTestCmd(t)
 		flags.Format = "yaml"
 
-		err := printResult(&results, flags)
+		err := printResult(results, flags)
 
 		if err == nil {
 			t.Error("expected error for invalid format, got nil")
@@ -175,7 +175,7 @@ func TestPrintResultAsText(t *testing.T) {
 			flags.Header = tt.header
 
 			output := captureStdout(t, func() {
-				printResultAsText(&tt.results, flags)
+				printResultAsText(tt.results, flags)
 			})
 
 			lines := strings.Split(strings.TrimSpace(output), "\n")
@@ -202,7 +202,7 @@ func TestPrintResultAsTable(t *testing.T) {
 	}
 
 	output := captureStdout(t, func() {
-		printResultAsTable(&results, flags)
+		printResultAsTable(results, flags)
 	})
 
 	lines := strings.Split(strings.TrimSpace(output), "\n")
@@ -240,7 +240,7 @@ func TestPrintResultAsTableAlwaysHasHeader(t *testing.T) {
 	}
 
 	output := captureStdout(t, func() {
-		printResultAsTable(&results, flags)
+		printResultAsTable(results, flags)
 	})
 
 	if !strings.Contains(output, "Provider") {
@@ -294,7 +294,7 @@ func TestPrintResultAsJson(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output := captureStdout(t, func() {
-				printResultAsJson(&tt.results)
+				printResultAsJson(tt.results)
 			})
 
 			var parsed []map[string]string
