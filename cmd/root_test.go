@@ -68,6 +68,7 @@ func TestFlagDefaults(t *testing.T) {
 		{"format", "format", "text"},
 		{"delimiter", "delimiter", " "},
 		{"header", "header", "false"},
+		{"no-update", "no-update", "false"},
 		{"verbose", "verbose", "false"},
 	}
 
@@ -123,6 +124,15 @@ func TestFlagBinding(t *testing.T) {
 			verify: func(t *testing.T, flags *common.CloudIpFlag) {
 				if !flags.Header {
 					t.Error("expected Flags.Header to be true")
+				}
+			},
+		},
+		{
+			name: "no-update flag",
+			args: []string{"--no-update"},
+			verify: func(t *testing.T, flags *common.CloudIpFlag) {
+				if !flags.NoUpdate {
+					t.Error("expected Flags.NoUpdate to be true")
 				}
 			},
 		},

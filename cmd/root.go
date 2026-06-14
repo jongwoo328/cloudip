@@ -20,6 +20,10 @@ func NewRootCmd(flags *common.CloudIpFlag, checker *ip.IPChecker) *cobra.Command
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.SetVerbose(flags.Verbose)
+			checker.SetUpdatePolicy(common.UpdatePolicy{
+				NoUpdate: flags.NoUpdate,
+				TTL:      common.DefaultUpdateCheckTTL,
+			})
 			result := checker.Check(args)
 			if err := printResult(cmd.OutOrStdout(), result, flags); err != nil {
 				return err
@@ -45,6 +49,7 @@ func NewRootCmd(flags *common.CloudIpFlag, checker *ip.IPChecker) *cobra.Command
 	rootCmd.Flags().StringVarP(&flags.Format, "format", "f", "text", "Output format (text, table, json)")
 	rootCmd.Flags().BoolVar(&flags.Header, "header", false, "Print header in the output. Only applicable for 'text' format")
 	rootCmd.Flags().StringVar(&flags.Delimiter, "delimiter", " ", "Delimiter for the output. Applicable for 'text' and 'table' format")
+	rootCmd.Flags().BoolVar(&flags.NoUpdate, "no-update", false, "Use local provider data without checking for updates")
 	rootCmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "Print verbose output")
 
 	return rootCmd

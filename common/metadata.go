@@ -2,6 +2,7 @@ package common
 
 import (
 	"cloudip/util"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -16,8 +17,9 @@ func (m *MetadataManager) Ensure() error {
 		}
 
 		err := m.Write(&CloudMetadata{
-			Type:      m.Metadata.Type,
-			Signature: "",
+			Type:        m.Metadata.Type,
+			Signature:   "",
+			LastChecked: 0,
 		})
 		if err != nil {
 			return util.ErrorWithInfo(err, "error writing metadata")
@@ -61,6 +63,23 @@ func (m *MetadataManager) IsSignatureExpired(signature string) bool {
 
 func (m *MetadataManager) IsExpired(upstreamLastModified time.Time) bool {
 	return m.IsSignatureExpired(LastModifiedSignature(upstreamLastModified))
+}
+
+func (m *MetadataManager) IsUpdateCheckFresh(now time.Time, ttl time.Duration) bool {
+	if m.Metadata == nil || m.Metadata.LastChecked == 0 {
+		return false
+	}
+	return !ShouldCheckUpdate(time.Unix(m.Metadata.LastChecked, 0), now, ttl)
+}
+
+func (m *MetadataManager) MarkChecked(now time.Time) error {
+	if m.Metadata == nil {
+		return errors.New("metadata is not initialized")
+	}
+
+	metadata := *m.Metadata
+	metadata.LastChecked = now.Unix()
+	return m.Write(&metadata)
 }
 
 func LastModifiedSignature(lastModified time.Time) string {

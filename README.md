@@ -28,6 +28,7 @@ This project is currently under development, and features and options may change
 - **Multiple IP Check**: Check multiple IP addresses at once.
 - **IPv4 and IPv6 Support**: Supports both IPv4 and IPv6 addresses.
 - **Format Output**: Display results in various formats using the `--format` option.
+- **Cached Provider Updates**: Provider data update checks are cached for 24 hours by default.
 
 ### Currently Supported Cloud Providers
 - **AWS**: Amazon Web Services
@@ -192,6 +193,13 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
   AWS IP ranges updated [2024-12-27 04:12:30]
   54.230.176.25 aws
   ```
+
+- Skip Provider Data Updates
+  By default, `cloudip` checks provider data updates at most once every 24 hours when local data files already exist. Use `--no-update` to skip provider update checks and use only local data.
+  ```shell
+  cloudip --no-update 54.230.176.25
+  ```
+  If the required local provider data file is missing, `--no-update` returns an error instead of downloading it.
 
 ### Error Handling
 If one or more IP checks fail, `cloudip` still prints all result rows and exits with a non-zero status code. In `text` and `table` formats, failed rows show `ERROR` in the provider column and detailed error messages are written to stderr. In `json` format, each row includes an `error` field.

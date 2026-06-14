@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"cloudip/common"
 	"cloudip/util"
 	"fmt"
 	"net"
@@ -18,6 +19,10 @@ type DataManager interface {
 	EnsureDataFile() error
 }
 
+type UpdatePolicySetter interface {
+	SetUpdatePolicy(common.UpdatePolicy)
+}
+
 type BaseProvider struct {
 	name        string
 	v4Tree      *util.CIDRTree
@@ -33,6 +38,12 @@ func NewBaseProvider(name string, dataManager DataManager, loadFunc func(*BasePr
 		name:        name,
 		dataManager: dataManager,
 		loadFunc:    loadFunc,
+	}
+}
+
+func (bp *BaseProvider) SetUpdatePolicy(policy common.UpdatePolicy) {
+	if setter, ok := bp.dataManager.(UpdatePolicySetter); ok {
+		setter.SetUpdatePolicy(policy)
 	}
 }
 
