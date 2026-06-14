@@ -39,6 +39,23 @@ func TestVersionCmdRejectsArgs(t *testing.T) {
 	}
 }
 
+func TestRootCmdUsesConfiguredOutputWriter(t *testing.T) {
+	cmd, _ := newTestCmd(t)
+	stdout := new(bytes.Buffer)
+	cmd.SetOut(stdout)
+	cmd.SetArgs([]string{"8.8.8.8"})
+
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := strings.TrimSpace(stdout.String())
+	if got != "8.8.8.8 unknown" {
+		t.Errorf("expected configured output writer to receive result, got %q", got)
+	}
+}
+
 func TestFlagDefaults(t *testing.T) {
 	cmd, _ := newTestCmd(t)
 	flags := cmd.Flags()

@@ -21,7 +21,7 @@ func NewRootCmd(flags *common.CloudIpFlag, checker *ip.IPChecker) *cobra.Command
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.SetVerbose(flags.Verbose)
 			result := checker.Check(args)
-			if err := printResult(result, flags); err != nil {
+			if err := printResult(cmd.OutOrStdout(), result, flags); err != nil {
 				return err
 			}
 			if !hasResultError(result) {
