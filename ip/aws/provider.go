@@ -2,6 +2,7 @@ package aws
 
 import (
 	"cloudip/ip/provider"
+	"cloudip/util"
 )
 
 type AWSProvider struct {
@@ -17,11 +18,17 @@ func NewAWSProvider() *AWSProvider {
 			}
 
 			for _, prefix := range awsIpRangeData.Prefixes {
-				bp.AddIPv4Range(prefix.IpPrefix)
+				if err := bp.AddIPv4Range(prefix.IpPrefix); err != nil {
+					util.PrintErrorTrace(util.ErrorWithInfo(err, "error parsing CIDR: "+prefix.IpPrefix))
+					continue
+				}
 			}
 
 			for _, prefix := range awsIpRangeData.Ipv6Prefixes {
-				bp.AddIPv6Range(prefix.Ipv6Prefix)
+				if err := bp.AddIPv6Range(prefix.Ipv6Prefix); err != nil {
+					util.PrintErrorTrace(util.ErrorWithInfo(err, "error parsing CIDR: "+prefix.Ipv6Prefix))
+					continue
+				}
 			}
 
 			return nil

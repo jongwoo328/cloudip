@@ -20,11 +20,10 @@ func NewCIDRTree() *CIDRTree {
 }
 
 // AddCIDR Add CIDR to tree
-func (tree *CIDRTree) AddCIDR(cidr string) {
+func (tree *CIDRTree) AddCIDR(cidr string) error {
 	_, ipNet, err := net.ParseCIDR(cidr)
 	if err != nil {
-		fmt.Printf("Invalid CIDR: %s, error: %v\n", cidr, err)
-		return // Invalid CIDR
+		return fmt.Errorf("invalid CIDR %q: %w", cidr, err)
 	}
 
 	maskSize, _ := ipNet.Mask.Size()
@@ -40,6 +39,7 @@ func (tree *CIDRTree) AddCIDR(cidr string) {
 	}
 	node.IsLeaf = true
 	node.CIDR = cidr
+	return nil
 }
 
 // Match Verify that the IP belongs to one of the CIDRs in the CIDR tree

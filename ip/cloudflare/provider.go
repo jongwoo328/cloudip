@@ -2,6 +2,7 @@ package cloudflare
 
 import (
 	"cloudip/ip/provider"
+	"cloudip/util"
 )
 
 type CloudflareProvider struct {
@@ -17,11 +18,17 @@ func NewCloudflareProvider() *CloudflareProvider {
 			}
 
 			for _, cidr := range data.V4CIDRs {
-				bp.AddIPv4Range(cidr)
+				if err := bp.AddIPv4Range(cidr); err != nil {
+					util.PrintErrorTrace(util.ErrorWithInfo(err, "error parsing CIDR: "+cidr))
+					continue
+				}
 			}
 
 			for _, cidr := range data.V6CIDRs {
-				bp.AddIPv6Range(cidr)
+				if err := bp.AddIPv6Range(cidr); err != nil {
+					util.PrintErrorTrace(util.ErrorWithInfo(err, "error parsing CIDR: "+cidr))
+					continue
+				}
 			}
 
 			return nil

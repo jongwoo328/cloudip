@@ -289,6 +289,25 @@ func TestBaseProvider_AddIPRanges(t *testing.T) {
 	}
 }
 
+func TestBaseProvider_AddIPRangesBeforeInitializeReturnsError(t *testing.T) {
+	bp := NewBaseProvider("TestProvider", &mockDataManager{}, func(bp *BaseProvider) error { return nil })
+
+	if err := bp.AddIPv4Range("192.168.1.0/24"); err == nil {
+		t.Fatal("AddIPv4Range() error = nil, want error before Initialize")
+	}
+	if err := bp.AddIPv6Range("2001:db8::/32"); err == nil {
+		t.Fatal("AddIPv6Range() error = nil, want error before Initialize")
+	}
+
+	var nilProvider *BaseProvider
+	if err := nilProvider.AddIPv4Range("192.168.1.0/24"); err == nil {
+		t.Fatal("AddIPv4Range() error = nil, want error for nil provider")
+	}
+	if err := nilProvider.AddIPv6Range("2001:db8::/32"); err == nil {
+		t.Fatal("AddIPv6Range() error = nil, want error for nil provider")
+	}
+}
+
 func TestBaseProvider_AddCIDRRange(t *testing.T) {
 	mockDM := &mockDataManager{}
 	bp := NewBaseProvider("TestProvider", mockDM, func(bp *BaseProvider) error { return nil })
