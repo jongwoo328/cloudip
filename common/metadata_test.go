@@ -136,3 +136,11 @@ func TestMetadataManagerMarkCheckedRequiresMetadata(t *testing.T) {
 		t.Fatal("MarkChecked() error = nil, want error")
 	}
 }
+
+func TestMetadataManagerEnsureRequiresMetadata(t *testing.T) {
+	manager := &MetadataManager{}
+
+	if err := manager.Ensure(); err == nil {
+		t.Fatal("Ensure() error = nil, want error")
+	}
+}
