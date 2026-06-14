@@ -99,12 +99,12 @@ func (bp *BaseProvider) Initialize() error {
 	return nil
 }
 
-func (bp *BaseProvider) AddIPv4Range(cidr string) {
-	bp.v4Tree.AddCIDR(cidr)
+func (bp *BaseProvider) AddIPv4Range(cidr string) error {
+	return bp.v4Tree.AddCIDR(cidr)
 }
 
-func (bp *BaseProvider) AddIPv6Range(cidr string) {
-	bp.v6Tree.AddCIDR(cidr)
+func (bp *BaseProvider) AddIPv6Range(cidr string) error {
+	return bp.v6Tree.AddCIDR(cidr)
 }
 
 func (bp *BaseProvider) AddCIDRRange(cidr string) error {
@@ -114,9 +114,7 @@ func (bp *BaseProvider) AddCIDRRange(cidr string) error {
 	}
 
 	if cidrVersion == util.IPv4 {
-		bp.AddIPv4Range(cidr)
-	} else {
-		bp.AddIPv6Range(cidr)
+		return bp.AddIPv4Range(cidr)
 	}
-	return nil
+	return bp.AddIPv6Range(cidr)
 }

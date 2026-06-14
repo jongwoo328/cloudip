@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"cloudip/ip/provider"
+	"cloudip/util"
 )
 
 type GCPProvider struct {
@@ -18,9 +19,15 @@ func NewGCPProvider() *GCPProvider {
 
 			for _, prefix := range gcpIpRangeData.Prefixes {
 				if prefix.Ipv4Prefix != "" {
-					bp.AddIPv4Range(prefix.Ipv4Prefix)
+					if err := bp.AddIPv4Range(prefix.Ipv4Prefix); err != nil {
+						util.PrintErrorTrace(util.ErrorWithInfo(err, "error parsing CIDR: "+prefix.Ipv4Prefix))
+						continue
+					}
 				} else if prefix.Ipv6Prefix != "" {
-					bp.AddIPv6Range(prefix.Ipv6Prefix)
+					if err := bp.AddIPv6Range(prefix.Ipv6Prefix); err != nil {
+						util.PrintErrorTrace(util.ErrorWithInfo(err, "error parsing CIDR: "+prefix.Ipv6Prefix))
+						continue
+					}
 				}
 			}
 

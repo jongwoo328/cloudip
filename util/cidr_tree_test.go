@@ -1,6 +1,9 @@
 package util
 
 import (
+	"io"
+	"os"
+	"strings"
 	"testing"
 )
 
@@ -35,4 +38,54 @@ func TestAddCIDRAndMatch(t *testing.T) {
 			t.Errorf("Failed: %s - got %v, expected %v", test.description, result, test.expected)
 		}
 	}
+}
+
+func TestAddCIDRInvalidReturnsErrorWithoutStdout(t *testing.T) {
+	tree := NewCIDRTree()
+
+	stdout := captureStdout(t, func() {
+		err := tree.AddCIDR("invalid-cidr")
+		if err == nil {
+			t.Fatal("AddCIDR() error = nil, want error")
+		}
+		if !strings.Contains(err.Error(), "invalid CIDR") {
+			t.Fatalf("AddCIDR() error = %q, want invalid CIDR context", err.Error())
+		}
+	})
+
+	if stdout != "" {
+		t.Fatalf("AddCIDR() wrote to stdout: %q", stdout)
+	}
+}
+
+type captureResult struct {
+	output string
+	err    error
+}
+
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed to create pipe: %v", err)
+	}
+
+	origStdout := os.Stdout
+	os.Stdout = w
+	defer func() { os.Stdout = origStdout }()
+
+	done := make(chan captureResult)
+	go func() {
+		out, err := io.ReadAll(r)
+		done <- captureResult{output: string(out), err: err}
+	}()
+
+	fn()
+	w.Close()
+
+	result := <-done
+	if result.err != nil {
+		t.Fatalf("failed to read captured stdout: %v", result.err)
+	}
+	return result.output
 }
