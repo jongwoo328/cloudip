@@ -94,14 +94,6 @@ func (ipDataManagerAws *IpDataManagerAws) SetUpdatePolicy(policy common.UpdatePo
 	ipDataManagerAws.UpdatePolicy = policy
 }
 
-func (ipDataManagerAws *IpDataManagerAws) updatePolicy() common.UpdatePolicy {
-	policy := ipDataManagerAws.UpdatePolicy
-	if policy.TTL <= 0 {
-		policy.TTL = common.DefaultUpdateCheckTTL
-	}
-	return policy
-}
-
 func awsSignatureFromHeaders(headers http.Header) (string, time.Time, error) {
 	currentLastModified, err := time.Parse(time.RFC1123, headers.Get("Last-Modified"))
 	if err != nil {
@@ -127,7 +119,7 @@ func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 
 	if !util.IsFileExists(ipDataManagerAws.DataFilePath) {
 		common.VerboseOutput("AWS IP ranges file not exists.")
-		if ipDataManagerAws.updatePolicy().NoUpdate {
+		if ipDataManagerAws.UpdatePolicy.NoUpdate {
 			return errors.New("AWS IP ranges file not exists and --no-update is enabled")
 		}
 		// Download the AWS IP ranges file
@@ -135,7 +127,7 @@ func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 		return err
 	}
 
-	policy := ipDataManagerAws.updatePolicy()
+	policy := ipDataManagerAws.UpdatePolicy
 	if policy.NoUpdate {
 		common.VerboseOutput("AWS IP ranges update check skipped.")
 		return nil

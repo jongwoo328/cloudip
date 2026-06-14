@@ -2,6 +2,7 @@ package common
 
 import (
 	"cloudip/util"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -72,6 +73,10 @@ func (m *MetadataManager) IsUpdateCheckFresh(now time.Time, ttl time.Duration) b
 }
 
 func (m *MetadataManager) MarkChecked(now time.Time) error {
+	if m.Metadata == nil {
+		return errors.New("metadata is not initialized")
+	}
+
 	metadata := *m.Metadata
 	metadata.LastChecked = now.Unix()
 	return m.Write(&metadata)

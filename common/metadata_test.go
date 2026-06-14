@@ -128,3 +128,11 @@ func TestMetadataManagerMarkChecked(t *testing.T) {
 		t.Fatal("IsUpdateCheckFresh() = false, want true")
 	}
 }
+
+func TestMetadataManagerMarkCheckedRequiresMetadata(t *testing.T) {
+	manager := &MetadataManager{}
+
+	if err := manager.MarkChecked(time.Now()); err == nil {
+		t.Fatal("MarkChecked() error = nil, want error")
+	}
+}

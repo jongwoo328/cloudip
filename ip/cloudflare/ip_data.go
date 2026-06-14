@@ -101,14 +101,6 @@ func (m *IpDataManagerCloudflare) SetUpdatePolicy(policy common.UpdatePolicy) {
 	m.UpdatePolicy = policy
 }
 
-func (m *IpDataManagerCloudflare) updatePolicy() common.UpdatePolicy {
-	policy := m.UpdatePolicy
-	if policy.TTL <= 0 {
-		policy.TTL = common.DefaultUpdateCheckTTL
-	}
-	return policy
-}
-
 func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 	if err := metadataManager.Ensure(); err != nil {
 		return err
@@ -119,13 +111,13 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 
 	if !util.IsFileExists(m.DataFilePathV4) || !util.IsFileExists(m.DataFilePathV6) {
 		common.VerboseOutput("Cloudflare IP ranges file not exists.")
-		if m.updatePolicy().NoUpdate {
+		if m.UpdatePolicy.NoUpdate {
 			return errors.New("Cloudflare IP ranges file not exists and --no-update is enabled")
 		}
 		return m.downloadData()
 	}
 
-	policy := m.updatePolicy()
+	policy := m.UpdatePolicy
 	if policy.NoUpdate {
 		common.VerboseOutput("Cloudflare IP ranges update check skipped.")
 		return nil

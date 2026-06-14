@@ -97,14 +97,6 @@ func (ipDataManagerGcp *IpDataManagerGcp) SetUpdatePolicy(policy common.UpdatePo
 	ipDataManagerGcp.UpdatePolicy = policy
 }
 
-func (ipDataManagerGcp *IpDataManagerGcp) updatePolicy() common.UpdatePolicy {
-	policy := ipDataManagerGcp.UpdatePolicy
-	if policy.TTL <= 0 {
-		policy.TTL = common.DefaultUpdateCheckTTL
-	}
-	return policy
-}
-
 func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 	if err := metadataManager.Ensure(); err != nil {
 		return err
@@ -115,14 +107,14 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 
 	if !util.IsFileExists(ipDataManagerGcp.DataFilePath) {
 		common.VerboseOutput("GCP IP ranges file not exists.")
-		if ipDataManagerGcp.updatePolicy().NoUpdate {
+		if ipDataManagerGcp.UpdatePolicy.NoUpdate {
 			return errors.New("GCP IP ranges file not exists and --no-update is enabled")
 		}
 		err := ipDataManagerGcp.downloadData()
 		return err
 	}
 
-	policy := ipDataManagerGcp.updatePolicy()
+	policy := ipDataManagerGcp.UpdatePolicy
 	if policy.NoUpdate {
 		common.VerboseOutput("GCP IP ranges update check skipped.")
 		return nil

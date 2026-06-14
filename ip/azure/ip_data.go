@@ -124,14 +124,6 @@ func (ipDataManagerAzure *IpDataManagerAzure) SetUpdatePolicy(policy common.Upda
 	ipDataManagerAzure.UpdatePolicy = policy
 }
 
-func (ipDataManagerAzure *IpDataManagerAzure) updatePolicy() common.UpdatePolicy {
-	policy := ipDataManagerAzure.UpdatePolicy
-	if policy.TTL <= 0 {
-		policy.TTL = common.DefaultUpdateCheckTTL
-	}
-	return policy
-}
-
 func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 	if err := metadataManager.Ensure(); err != nil {
 		return err
@@ -142,14 +134,14 @@ func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 
 	if !util.IsFileExists(ipDataManagerAzure.DataFilePath) {
 		common.VerboseOutput("Azure IP ranged file not exists.")
-		if ipDataManagerAzure.updatePolicy().NoUpdate {
+		if ipDataManagerAzure.UpdatePolicy.NoUpdate {
 			return errors.New("Azure IP ranges file not exists and --no-update is enabled")
 		}
 		err := ipDataManagerAzure.downloadData()
 		return err
 	}
 
-	policy := ipDataManagerAzure.updatePolicy()
+	policy := ipDataManagerAzure.UpdatePolicy
 	if policy.NoUpdate {
 		common.VerboseOutput("Azure IP ranges update check skipped.")
 		return nil
