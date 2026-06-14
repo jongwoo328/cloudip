@@ -4,7 +4,7 @@ import (
 	"cloudip/common"
 	"encoding/json"
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
@@ -32,30 +32,34 @@ type jsonResult struct {
 	Error    string `json:"error"`
 }
 
-func printResult(results []common.Result, flags *common.CloudIpFlag) error {
+func printResult(w io.Writer, results []common.Result, flags *common.CloudIpFlag) error {
 	switch flags.Format {
 	case "text":
-		printResultAsText(results, flags)
+		return printResultAsText(w, results, flags)
 	case "table":
-		printResultAsTable(results, flags)
+		return printResultAsTable(w, results, flags)
 	case "json":
-		return printResultAsJson(results)
+		return printResultAsJson(w, results)
 	default:
 		return fmt.Errorf("invalid output format: %s. Supported formats are: text, table, json", flags.Format)
 	}
-	return nil
 }
 
-func printResultAsText(results []common.Result, flags *common.CloudIpFlag) {
+func printResultAsText(w io.Writer, results []common.Result, flags *common.CloudIpFlag) error {
 	if flags.Header {
-		fmt.Printf("%s%s%s\n", headers["IP"], flags.Delimiter, headers["Provider"])
+		if _, err := fmt.Fprintf(w, "%s%s%s\n", headers["IP"], flags.Delimiter, headers["Provider"]); err != nil {
+			return fmt.Errorf("error writing text result: %w", err)
+		}
 	}
 	for _, r := range results {
-		fmt.Printf("%s%s%s\n", r.Ip, flags.Delimiter, getProviderString(r))
+		if _, err := fmt.Fprintf(w, "%s%s%s\n", r.Ip, flags.Delimiter, getProviderString(r)); err != nil {
+			return fmt.Errorf("error writing text result: %w", err)
+		}
 	}
+	return nil
 }
-func printResultAsTable(results []common.Result, flags *common.CloudIpFlag) {
-	table := tablewriter.NewTable(os.Stdout,
+func printResultAsTable(w io.Writer, results []common.Result, flags *common.CloudIpFlag) error {
+	table := tablewriter.NewTable(w,
 		tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
 			Borders:  tw.Border{Left: tw.Off, Right: tw.Off, Top: tw.Off, Bottom: tw.Off},
 			Symbols:  tw.NewSymbolCustom("delim").WithColumn(flags.Delimiter),
@@ -71,10 +75,13 @@ func printResultAsTable(results []common.Result, flags *common.CloudIpFlag) {
 	for _, r := range results {
 		table.Append(r.Ip, getProviderString(r))
 	}
-	table.Render()
+	if err := table.Render(); err != nil {
+		return fmt.Errorf("error writing table result: %w", err)
+	}
+	return nil
 }
 
-func printResultAsJson(results []common.Result) error {
+func printResultAsJson(w io.Writer, results []common.Result) error {
 	resultSlice := make([]jsonResult, 0, len(results))
 	for _, r := range results {
 		result := jsonResult{
@@ -88,7 +95,9 @@ func printResultAsJson(results []common.Result) error {
 	if err != nil {
 		return fmt.Errorf("error converting result to JSON: %w", err)
 	}
-	fmt.Println(string(bytes))
+	if _, err := fmt.Fprintln(w, string(bytes)); err != nil {
+		return fmt.Errorf("error writing JSON result: %w", err)
+	}
 	return nil
 }
 

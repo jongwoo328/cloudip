@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"cloudip/common"
 	"encoding/json"
 	"fmt"
@@ -73,15 +74,14 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 			flags.Format = tt.format
 
 			var err error
-			output := captureStdout(t, func() {
-				err = printResult(results, flags)
-			})
+			output := new(bytes.Buffer)
+			err = printResult(output, results, flags)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			got := strings.TrimSpace(output)
+			got := strings.TrimSpace(output.String())
 			if got != tt.expected {
 				t.Errorf("format '%s': expected %q, got %q", tt.format, tt.expected, got)
 			}
@@ -93,16 +93,15 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		flags.Format = "table"
 
 		var err error
-		output := captureStdout(t, func() {
-			err = printResult(results, flags)
-		})
+		output := new(bytes.Buffer)
+		err = printResult(output, results, flags)
 
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if !strings.Contains(output, "1.2.3.4") || !strings.Contains(output, "aws") {
-			t.Errorf("format 'table': expected output to contain '1.2.3.4' and 'aws', got %q", output)
+		if !strings.Contains(output.String(), "1.2.3.4") || !strings.Contains(output.String(), "aws") {
+			t.Errorf("format 'table': expected output to contain '1.2.3.4' and 'aws', got %q", output.String())
 		}
 	})
 
@@ -110,7 +109,8 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		_, flags := newTestCmd(t)
 		flags.Format = "yaml"
 
-		err := printResult(results, flags)
+		output := new(bytes.Buffer)
+		err := printResult(output, results, flags)
 
 		if err == nil {
 			t.Error("expected error for invalid format, got nil")
@@ -174,13 +174,14 @@ func TestPrintResultAsText(t *testing.T) {
 			flags.Delimiter = tt.delimiter
 			flags.Header = tt.header
 
-			output := captureStdout(t, func() {
-				printResultAsText(tt.results, flags)
-			})
+			output := new(bytes.Buffer)
+			if err := printResultAsText(output, tt.results, flags); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
-			lines := strings.Split(strings.TrimSpace(output), "\n")
+			lines := strings.Split(strings.TrimSpace(output.String()), "\n")
 			if len(lines) != len(tt.expected) {
-				t.Fatalf("expected %d lines, got %d: %q", len(tt.expected), len(lines), output)
+				t.Fatalf("expected %d lines, got %d: %q", len(tt.expected), len(lines), output.String())
 			}
 			for i, want := range tt.expected {
 				if lines[i] != want {
@@ -201,15 +202,16 @@ func TestPrintResultAsTable(t *testing.T) {
 		{Ip: "5.6.7.8", Provider: common.Azure},
 	}
 
-	output := captureStdout(t, func() {
-		printResultAsTable(results, flags)
-	})
+	output := new(bytes.Buffer)
+	if err := printResultAsTable(output, results, flags); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
-	lines := strings.Split(strings.TrimSpace(output), "\n")
+	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
 
 	// header + 2 data rows
 	if len(lines) != 3 {
-		t.Fatalf("expected 3 lines (header + 2 data), got %d: %q", len(lines), output)
+		t.Fatalf("expected 3 lines (header + 2 data), got %d: %q", len(lines), output.String())
 	}
 
 	// header is first line
@@ -239,12 +241,13 @@ func TestPrintResultAsTableAlwaysHasHeader(t *testing.T) {
 		{Ip: "10.0.0.1", Provider: common.AWS},
 	}
 
-	output := captureStdout(t, func() {
-		printResultAsTable(results, flags)
-	})
+	output := new(bytes.Buffer)
+	if err := printResultAsTable(output, results, flags); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
-	if !strings.Contains(output, "Provider") {
-		t.Errorf("expected table to always include header, but 'Provider' not found in output: %q", output)
+	if !strings.Contains(output.String(), "Provider") {
+		t.Errorf("expected table to always include header, but 'Provider' not found in output: %q", output.String())
 	}
 }
 
@@ -293,13 +296,14 @@ func TestPrintResultAsJson(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			output := captureStdout(t, func() {
-				printResultAsJson(tt.results)
-			})
+			output := new(bytes.Buffer)
+			if err := printResultAsJson(output, tt.results); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
 			var parsed []map[string]string
-			if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &parsed); err != nil {
-				t.Fatalf("output is not valid JSON: %v, output: %q", err, output)
+			if err := json.Unmarshal([]byte(strings.TrimSpace(output.String())), &parsed); err != nil {
+				t.Fatalf("output is not valid JSON: %v, output: %q", err, output.String())
 			}
 
 			if len(parsed) != len(tt.expected) {
