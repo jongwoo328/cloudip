@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 )
 
 type IpDataManagerGcp struct {
@@ -13,6 +14,7 @@ type IpDataManagerGcp struct {
 	DataFile     string
 	DataFilePath string
 	IpRange      IpRangeDataGcp
+	UpdatePolicy common.UpdatePolicy
 }
 
 type IpRangeDataGcp struct {
@@ -73,20 +75,34 @@ func (ipDataManagerGcp *IpDataManagerGcp) writeData(gcpIpRangeData *IpRangeDataG
 		return err
 	}
 
-	if metadataManager.IsSignatureExpired(gcpIpRangeData.SyncToken) {
-		metadata := common.CloudMetadata{
-			Type:      common.GCP,
-			Signature: gcpIpRangeData.SyncToken,
-		}
-		if err := metadataManager.Write(&metadata); err != nil {
-			err = util.ErrorWithInfo(err, "error writing metadata")
-			util.PrintErrorTrace(err)
-			return err
-		}
+	signatureExpired := metadataManager.IsSignatureExpired(gcpIpRangeData.SyncToken)
+	metadata := common.CloudMetadata{
+		Type:        common.GCP,
+		Signature:   gcpIpRangeData.SyncToken,
+		LastChecked: time.Now().Unix(),
+	}
+	if err := metadataManager.Write(&metadata); err != nil {
+		err = util.ErrorWithInfo(err, "error writing metadata")
+		util.PrintErrorTrace(err)
+		return err
+	}
+	if signatureExpired {
 		common.VerboseOutput(fmt.Sprintf("GCP IP ranges updated [%s]", gcpIpRangeData.CreationTime))
 	}
 
 	return nil
+}
+
+func (ipDataManagerGcp *IpDataManagerGcp) SetUpdatePolicy(policy common.UpdatePolicy) {
+	ipDataManagerGcp.UpdatePolicy = policy
+}
+
+func (ipDataManagerGcp *IpDataManagerGcp) updatePolicy() common.UpdatePolicy {
+	policy := ipDataManagerGcp.UpdatePolicy
+	if policy.TTL <= 0 {
+		policy.TTL = common.DefaultUpdateCheckTTL
+	}
+	return policy
 }
 
 func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
@@ -99,8 +115,21 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 
 	if !util.IsFileExists(ipDataManagerGcp.DataFilePath) {
 		common.VerboseOutput("GCP IP ranges file not exists.")
+		if ipDataManagerGcp.updatePolicy().NoUpdate {
+			return errors.New("GCP IP ranges file not exists and --no-update is enabled")
+		}
 		err := ipDataManagerGcp.downloadData()
 		return err
+	}
+
+	policy := ipDataManagerGcp.updatePolicy()
+	if policy.NoUpdate {
+		common.VerboseOutput("GCP IP ranges update check skipped.")
+		return nil
+	}
+	if metadataManager.IsUpdateCheckFresh(time.Now(), policy.EffectiveTTL()) {
+		common.VerboseOutput("GCP IP ranges update check skipped; cache is fresh.")
+		return nil
 	}
 
 	gcpIpRangeData, err := ipDataManagerGcp.fetchData()
@@ -114,6 +143,9 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 	if metadataManager.IsSignatureExpired(gcpIpRangeData.SyncToken) {
 		common.VerboseOutput("GCP IP ranges are outdated. Updating to the latest version...")
 		return ipDataManagerGcp.writeData(gcpIpRangeData)
+	}
+	if err := metadataManager.MarkChecked(time.Now()); err != nil {
+		return util.ErrorWithInfo(err, "error writing metadata")
 	}
 	common.VerboseOutput("GCP IP ranges are up-to-date.")
 

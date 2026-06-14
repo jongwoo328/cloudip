@@ -2,7 +2,6 @@ package azure
 
 import (
 	"cloudip/common"
-	"cloudip/util"
 )
 
 var metadataManager = &common.MetadataManager{
@@ -14,11 +13,10 @@ var metadataManager = &common.MetadataManager{
 	},
 }
 
-func isExpired() bool {
+func (ipDataManagerAzure *IpDataManagerAzure) isExpired() (bool, error) {
 	lastModifiedDate, err := ipDataManagerAzure.GetLastModifiedUpstream()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting last modified time from Microsoft server"))
-		return false
+		return false, err
 	}
-	return metadataManager.IsExpired(lastModifiedDate)
+	return metadataManager.IsExpired(lastModifiedDate), nil
 }

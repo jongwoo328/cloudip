@@ -16,6 +16,7 @@ type IpDataManagerAws struct {
 	DataFile     string
 	DataFilePath string
 	IpRange      IpRangeDataAws
+	UpdatePolicy common.UpdatePolicy
 }
 
 type IpRangeDataAws struct {
@@ -71,20 +72,34 @@ func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
 		return err
 	}
 
-	if metadataManager.IsSignatureExpired(signature) {
-		metadata := common.CloudMetadata{
-			Type:      common.AWS,
-			Signature: signature,
-		}
-		if err := metadataManager.Write(&metadata); err != nil {
-			err = util.ErrorWithInfo(err, "error writing metadata")
-			util.PrintErrorTrace(err)
-			return err
-		}
+	signatureExpired := metadataManager.IsSignatureExpired(signature)
+	metadata := common.CloudMetadata{
+		Type:        common.AWS,
+		Signature:   signature,
+		LastChecked: time.Now().Unix(),
+	}
+	if err := metadataManager.Write(&metadata); err != nil {
+		err = util.ErrorWithInfo(err, "error writing metadata")
+		util.PrintErrorTrace(err)
+		return err
+	}
+	if signatureExpired {
 		common.VerboseOutput(fmt.Sprintf("AWS IP ranges updated [%s]", util.FormatToTimestamp(currentLastModified)))
 	}
 
 	return nil
+}
+
+func (ipDataManagerAws *IpDataManagerAws) SetUpdatePolicy(policy common.UpdatePolicy) {
+	ipDataManagerAws.UpdatePolicy = policy
+}
+
+func (ipDataManagerAws *IpDataManagerAws) updatePolicy() common.UpdatePolicy {
+	policy := ipDataManagerAws.UpdatePolicy
+	if policy.TTL <= 0 {
+		policy.TTL = common.DefaultUpdateCheckTTL
+	}
+	return policy
 }
 
 func awsSignatureFromHeaders(headers http.Header) (string, time.Time, error) {
@@ -110,17 +125,39 @@ func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(DataFilePathAws) {
+	if !util.IsFileExists(ipDataManagerAws.DataFilePath) {
 		common.VerboseOutput("AWS IP ranges file not exists.")
+		if ipDataManagerAws.updatePolicy().NoUpdate {
+			return errors.New("AWS IP ranges file not exists and --no-update is enabled")
+		}
 		// Download the AWS IP ranges file
 		err := ipDataManagerAws.downloadData()
 		return err
 	}
-	if isExpired() {
+
+	policy := ipDataManagerAws.updatePolicy()
+	if policy.NoUpdate {
+		common.VerboseOutput("AWS IP ranges update check skipped.")
+		return nil
+	}
+	if metadataManager.IsUpdateCheckFresh(time.Now(), policy.EffectiveTTL()) {
+		common.VerboseOutput("AWS IP ranges update check skipped; cache is fresh.")
+		return nil
+	}
+
+	expired, err := ipDataManagerAws.isExpired()
+	if err != nil {
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from AWS server"))
+		return nil
+	}
+	if expired {
 		common.VerboseOutput("AWS IP ranges are outdated. Updating to the latest version...")
 		// update the file
 		err := ipDataManagerAws.downloadData()
 		return err
+	}
+	if err := metadataManager.MarkChecked(time.Now()); err != nil {
+		return util.ErrorWithInfo(err, "error writing metadata")
 	}
 	common.VerboseOutput("AWS IP ranges are up-to-date.")
 

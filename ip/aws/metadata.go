@@ -2,7 +2,6 @@ package aws
 
 import (
 	"cloudip/common"
-	"cloudip/util"
 )
 
 var metadataManager = &common.MetadataManager{
@@ -14,11 +13,10 @@ var metadataManager = &common.MetadataManager{
 	},
 }
 
-func isExpired() bool {
+func (ipDataManagerAws *IpDataManagerAws) isExpired() (bool, error) {
 	signature, err := ipDataManagerAws.GetSignatureUpstream()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from AWS server"))
-		return false
+		return false, err
 	}
-	return metadataManager.IsSignatureExpired(signature)
+	return metadataManager.IsSignatureExpired(signature), nil
 }

@@ -15,6 +15,7 @@ type IpDataManagerAzure struct {
 	DataFile     string
 	DataFilePath string
 	IpRange      IpRangeDataAzure
+	UpdatePolicy common.UpdatePolicy
 	dataURIMu    sync.Mutex
 }
 
@@ -101,21 +102,34 @@ func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 	}
 	signature := common.LastModifiedSignature(currentLastModified)
 
-	if metadataManager.IsSignatureExpired(signature) {
-		metadata := common.CloudMetadata{
-			Type:      common.Azure,
-			Signature: signature,
-		}
-		if err := metadataManager.Write(&metadata); err != nil {
-			err = util.ErrorWithInfo(err, "error writing metadata")
-			util.PrintErrorTrace(err)
-			return err
-		}
+	signatureExpired := metadataManager.IsSignatureExpired(signature)
+	metadata := common.CloudMetadata{
+		Type:        common.Azure,
+		Signature:   signature,
+		LastChecked: time.Now().Unix(),
+	}
+	if err := metadataManager.Write(&metadata); err != nil {
+		err = util.ErrorWithInfo(err, "error writing metadata")
+		util.PrintErrorTrace(err)
+		return err
+	}
+	if signatureExpired {
 		common.VerboseOutput(fmt.Sprintf("Azure IP ranges updated [%s]", util.FormatToTimestamp(currentLastModified)))
-
 	}
 
 	return nil
+}
+
+func (ipDataManagerAzure *IpDataManagerAzure) SetUpdatePolicy(policy common.UpdatePolicy) {
+	ipDataManagerAzure.UpdatePolicy = policy
+}
+
+func (ipDataManagerAzure *IpDataManagerAzure) updatePolicy() common.UpdatePolicy {
+	policy := ipDataManagerAzure.UpdatePolicy
+	if policy.TTL <= 0 {
+		policy.TTL = common.DefaultUpdateCheckTTL
+	}
+	return policy
 }
 
 func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
@@ -126,15 +140,37 @@ func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(DataFilePathAzure) {
+	if !util.IsFileExists(ipDataManagerAzure.DataFilePath) {
 		common.VerboseOutput("Azure IP ranged file not exists.")
+		if ipDataManagerAzure.updatePolicy().NoUpdate {
+			return errors.New("Azure IP ranges file not exists and --no-update is enabled")
+		}
 		err := ipDataManagerAzure.downloadData()
 		return err
 	}
-	if isExpired() {
+
+	policy := ipDataManagerAzure.updatePolicy()
+	if policy.NoUpdate {
+		common.VerboseOutput("Azure IP ranges update check skipped.")
+		return nil
+	}
+	if metadataManager.IsUpdateCheckFresh(time.Now(), policy.EffectiveTTL()) {
+		common.VerboseOutput("Azure IP ranges update check skipped; cache is fresh.")
+		return nil
+	}
+
+	expired, err := ipDataManagerAzure.isExpired()
+	if err != nil {
+		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting last modified time from Microsoft server"))
+		return nil
+	}
+	if expired {
 		common.VerboseOutput("Azure IP ranged are outdated. Updating to the latest version...")
 		err := ipDataManagerAzure.downloadData()
 		return err
+	}
+	if err := metadataManager.MarkChecked(time.Now()); err != nil {
+		return util.ErrorWithInfo(err, "error writing metadata")
 	}
 	common.VerboseOutput("Azure IP ranged are up-to-date.")
 

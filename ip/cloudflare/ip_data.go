@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 )
 
 type IpDataManagerCloudflare struct {
@@ -16,6 +17,7 @@ type IpDataManagerCloudflare struct {
 	DataFilePathV4 string
 	DataFilePathV6 string
 	IpRange        IpRangeDataCloudflare
+	UpdatePolicy   common.UpdatePolicy
 }
 
 type IpRangeDataCloudflare struct {
@@ -77,20 +79,34 @@ func (m *IpDataManagerCloudflare) writeData(data *ipListResponseCloudflare) erro
 		return err
 	}
 
-	if metadataManager.IsSignatureExpired(signature) {
-		metadata := common.CloudMetadata{
-			Type:      common.Cloudflare,
-			Signature: signature,
-		}
-		if err := metadataManager.Write(&metadata); err != nil {
-			err = util.ErrorWithInfo(err, "error writing metadata")
-			util.PrintErrorTrace(err)
-			return err
-		}
+	signatureExpired := metadataManager.IsSignatureExpired(signature)
+	metadata := common.CloudMetadata{
+		Type:        common.Cloudflare,
+		Signature:   signature,
+		LastChecked: time.Now().Unix(),
+	}
+	if err := metadataManager.Write(&metadata); err != nil {
+		err = util.ErrorWithInfo(err, "error writing metadata")
+		util.PrintErrorTrace(err)
+		return err
+	}
+	if signatureExpired {
 		common.VerboseOutput("Cloudflare IP ranges updated")
 	}
 
 	return nil
+}
+
+func (m *IpDataManagerCloudflare) SetUpdatePolicy(policy common.UpdatePolicy) {
+	m.UpdatePolicy = policy
+}
+
+func (m *IpDataManagerCloudflare) updatePolicy() common.UpdatePolicy {
+	policy := m.UpdatePolicy
+	if policy.TTL <= 0 {
+		policy.TTL = common.DefaultUpdateCheckTTL
+	}
+	return policy
 }
 
 func (m *IpDataManagerCloudflare) EnsureDataFile() error {
@@ -103,7 +119,20 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 
 	if !util.IsFileExists(m.DataFilePathV4) || !util.IsFileExists(m.DataFilePathV6) {
 		common.VerboseOutput("Cloudflare IP ranges file not exists.")
+		if m.updatePolicy().NoUpdate {
+			return errors.New("Cloudflare IP ranges file not exists and --no-update is enabled")
+		}
 		return m.downloadData()
+	}
+
+	policy := m.updatePolicy()
+	if policy.NoUpdate {
+		common.VerboseOutput("Cloudflare IP ranges update check skipped.")
+		return nil
+	}
+	if metadataManager.IsUpdateCheckFresh(time.Now(), policy.EffectiveTTL()) {
+		common.VerboseOutput("Cloudflare IP ranges update check skipped; cache is fresh.")
+		return nil
 	}
 
 	data, err := m.fetchData()
@@ -118,6 +147,9 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 	if metadataManager.IsSignatureExpired(signature) {
 		common.VerboseOutput("Cloudflare IP ranges are outdated. Updating to the latest version...")
 		return m.writeData(data)
+	}
+	if err := metadataManager.MarkChecked(time.Now()); err != nil {
+		return util.ErrorWithInfo(err, "error writing metadata")
 	}
 	common.VerboseOutput("Cloudflare IP ranges are up-to-date.")
 
