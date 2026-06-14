@@ -10,7 +10,7 @@ import (
 )
 
 func (m *MetadataManager) Ensure() error {
-	if m.Metadata == nil {
+	if m == nil || m.Metadata == nil {
 		return errors.New("metadata is not initialized")
 	}
 
