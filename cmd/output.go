@@ -26,6 +26,12 @@ var headers = map[string]string{
 	"Provider": "Provider",
 }
 
+type jsonResult struct {
+	IP       string `json:"ip"`
+	Provider string `json:"provider"`
+	Error    string `json:"error"`
+}
+
 func printResult(results *[]common.Result, flags *common.CloudIpFlag) error {
 	switch flags.Format {
 	case "text":
@@ -69,13 +75,14 @@ func printResultAsTable(results *[]common.Result, flags *common.CloudIpFlag) {
 }
 
 func printResultAsJson(results *[]common.Result) error {
-	resultSlice := make([]map[string]string, 0)
+	resultSlice := make([]jsonResult, 0, len(*results))
 	for _, r := range *results {
-		resultMap := map[string]string{
-			headers["IP"]:       r.Ip,
-			headers["Provider"]: getProviderString(r),
+		result := jsonResult{
+			IP:       r.Ip,
+			Provider: getJSONProviderString(r),
+			Error:    getErrorString(r),
 		}
-		resultSlice = append(resultSlice, resultMap)
+		resultSlice = append(resultSlice, result)
 	}
 	bytes, err := json.Marshal(resultSlice)
 	if err != nil {
@@ -83,4 +90,18 @@ func printResultAsJson(results *[]common.Result) error {
 	}
 	fmt.Println(string(bytes))
 	return nil
+}
+
+func getJSONProviderString(r common.Result) string {
+	if r.Error != nil {
+		return "error"
+	}
+	return getProviderString(r)
+}
+
+func getErrorString(r common.Result) string {
+	if r.Error == nil {
+		return ""
+	}
+	return r.Error.Error()
 }

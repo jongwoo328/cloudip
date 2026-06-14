@@ -161,8 +161,9 @@ yay -S cloudip
     ```
     출력:
     ```json
-    [{"IP":"54.230.176.25","Provider":"aws"}]
+    [{"ip":"54.230.176.25","provider":"aws","error":""}]
     ```
+    JSON 출력은 `ip`, `provider`, `error` 소문자 키를 사용합니다. IP 검사에 실패하면 `provider`는 `error`가 되고 `error` 필드에 실패 원인이 들어갑니다.
 
   - `csv`: CSV 형식은 `--format=csv` 옵션을 직접 지원하지 않습니다. 
     대신, `--format=text` 와 `--delimiter=','` 옵션을 함께 사용하여 CSV와 유사한 형식으로 출력할 수 있습니다. 헤더를 포함하려면 `--header` 옵션을 추가합니다.
@@ -188,6 +189,9 @@ yay -S cloudip
   AWS IP ranges updated [2024-12-27 04:12:30]
   54.230.176.25 aws
   ```
+
+### 에러 처리 (Error Handling)
+하나 이상의 IP 검사에 실패해도 `cloudip`는 모든 결과 행을 출력한 뒤 non-zero 종료 코드를 반환합니다. `text`와 `table` 형식에서는 실패한 행의 provider 컬럼에 `ERROR`를 표시하고, 상세 에러 메시지는 stderr로 출력합니다. `json` 형식에서는 각 행의 `error` 필드에 에러 원인을 포함합니다.
 
 ---
 

@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"cloudip/common"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -119,5 +120,69 @@ func TestFlagBinding(t *testing.T) {
 			}
 			tt.verify(t, flags)
 		})
+	}
+}
+
+func TestRootCmdReturnsErrorWhenAnyResultHasError(t *testing.T) {
+	cmd, _ := newTestCmd(t)
+	stderr := new(bytes.Buffer)
+	cmd.SetErr(stderr)
+	cmd.SetArgs([]string{"bad-ip", "8.8.8.8"})
+
+	var err error
+	stdout := captureStdout(t, func() {
+		err = cmd.Execute()
+	})
+
+	if err == nil {
+		t.Fatal("expected command error for invalid IP")
+	}
+	if !strings.Contains(stdout, "bad-ip ERROR") {
+		t.Fatalf("expected stdout to include error row, got %q", stdout)
+	}
+	if !strings.Contains(stdout, "8.8.8.8 unknown") {
+		t.Fatalf("expected stdout to include successful unknown row, got %q", stdout)
+	}
+	if !strings.Contains(stderr.String(), "bad-ip: error parsing IP: bad-ip") {
+		t.Fatalf("expected stderr to include detailed error, got %q", stderr.String())
+	}
+	if strings.Contains(stderr.String(), "Usage:") {
+		t.Fatalf("stderr should not include usage for result errors, got %q", stderr.String())
+	}
+}
+
+func TestRootCmdJSONErrorOutputIsValidJSON(t *testing.T) {
+	cmd, _ := newTestCmd(t)
+	stderr := new(bytes.Buffer)
+	cmd.SetErr(stderr)
+	cmd.SetArgs([]string{"--format", "json", "bad-ip", "8.8.8.8"})
+
+	var err error
+	stdout := captureStdout(t, func() {
+		err = cmd.Execute()
+	})
+
+	if err == nil {
+		t.Fatal("expected command error for invalid IP")
+	}
+
+	var parsed []map[string]string
+	if err := json.Unmarshal([]byte(strings.TrimSpace(stdout)), &parsed); err != nil {
+		t.Fatalf("stdout is not valid JSON: %v, stdout: %q", err, stdout)
+	}
+	if len(parsed) != 2 {
+		t.Fatalf("expected 2 JSON rows, got %d: %v", len(parsed), parsed)
+	}
+	if parsed[0]["ip"] != "bad-ip" || parsed[0]["provider"] != "error" || parsed[0]["error"] == "" {
+		t.Fatalf("unexpected error row: %v", parsed[0])
+	}
+	if parsed[1]["ip"] != "8.8.8.8" || parsed[1]["provider"] != "unknown" || parsed[1]["error"] != "" {
+		t.Fatalf("unexpected unknown row: %v", parsed[1])
+	}
+	if !strings.Contains(stderr.String(), "bad-ip: error parsing IP: bad-ip") {
+		t.Fatalf("expected stderr to include detailed error, got %q", stderr.String())
+	}
+	if strings.Contains(stderr.String(), "Usage:") {
+		t.Fatalf("stderr should not include usage for result errors, got %q", stderr.String())
 	}
 }

@@ -163,8 +163,9 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
     ```
     Output:
     ```json
-    [{"IP":"54.230.176.25","Provider":"aws"}]
+    [{"ip":"54.230.176.25","provider":"aws","error":""}]
     ```
+    JSON output uses lowercase keys: `ip`, `provider`, and `error`. If an IP check fails, `provider` is set to `error` and the `error` field contains the reason.
 
   - `csv`: This tool does not have a direct `--format=csv` option. 
     However, you can produce CSV-like output by combining `--format=text` with `--delimiter=','`.
@@ -191,6 +192,9 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
   AWS IP ranges updated [2024-12-27 04:12:30]
   54.230.176.25 aws
   ```
+
+### Error Handling
+If one or more IP checks fail, `cloudip` still prints all result rows and exits with a non-zero status code. In `text` and `table` formats, failed rows show `ERROR` in the provider column and detailed error messages are written to stderr. In `json` format, each row includes an `error` field.
 
 
 ---

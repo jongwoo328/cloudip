@@ -63,7 +63,7 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		{
 			name:     "dispatches to json",
 			format:   "json",
-			expected: `[{"IP":"1.2.3.4","Provider":"aws"}]`,
+			expected: `[{"ip":"1.2.3.4","provider":"aws","error":""}]`,
 		},
 	}
 
@@ -263,8 +263,8 @@ func TestPrintResultAsJson(t *testing.T) {
 				{Ip: "5.6.7.8", Provider: ""},
 			},
 			expected: []map[string]string{
-				{"IP": "1.2.3.4", "Provider": "aws"},
-				{"IP": "5.6.7.8", "Provider": "unknown"},
+				{"ip": "1.2.3.4", "provider": "aws", "error": ""},
+				{"ip": "5.6.7.8", "provider": "unknown", "error": ""},
 			},
 		},
 		{
@@ -275,9 +275,18 @@ func TestPrintResultAsJson(t *testing.T) {
 				{Ip: "3.3.3.3", Provider: common.Azure},
 			},
 			expected: []map[string]string{
-				{"IP": "1.1.1.1", "Provider": "aws"},
-				{"IP": "2.2.2.2", "Provider": "gcp"},
-				{"IP": "3.3.3.3", "Provider": "azure"},
+				{"ip": "1.1.1.1", "provider": "aws", "error": ""},
+				{"ip": "2.2.2.2", "provider": "gcp", "error": ""},
+				{"ip": "3.3.3.3", "provider": "azure", "error": ""},
+			},
+		},
+		{
+			name: "error result",
+			results: []common.Result{
+				{Ip: "bad-ip", Error: fmt.Errorf("error parsing IP: bad-ip")},
+			},
+			expected: []map[string]string{
+				{"ip": "bad-ip", "provider": "error", "error": "error parsing IP: bad-ip"},
 			},
 		},
 	}
@@ -298,7 +307,7 @@ func TestPrintResultAsJson(t *testing.T) {
 			}
 
 			for i, want := range tt.expected {
-				if parsed[i]["IP"] != want["IP"] || parsed[i]["Provider"] != want["Provider"] {
+				if parsed[i]["ip"] != want["ip"] || parsed[i]["provider"] != want["provider"] || parsed[i]["error"] != want["error"] {
 					t.Errorf("item %d: expected %v, got %v", i, want, parsed[i])
 				}
 			}
