@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"fmt"
+	"os"
 	"runtime"
 )
 
@@ -16,7 +17,7 @@ func ErrorWithInfo(e error, msg string) error {
 
 func PrintErrorTrace(e error) {
 	for e != nil {
-		fmt.Println("Error:", e)
+		fmt.Fprintln(os.Stderr, "Error:", e)
 		e = errors.Unwrap(e)
 	}
 }

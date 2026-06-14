@@ -63,7 +63,7 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		{
 			name:     "dispatches to json",
 			format:   "json",
-			expected: `[{"IP":"1.2.3.4","Provider":"aws"}]`,
+			expected: `[{"ip":"1.2.3.4","provider":"aws","error":""}]`,
 		},
 	}
 
@@ -74,7 +74,7 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 
 			var err error
 			output := captureStdout(t, func() {
-				err = printResult(&results, flags)
+				err = printResult(results, flags)
 			})
 
 			if err != nil {
@@ -94,7 +94,7 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 
 		var err error
 		output := captureStdout(t, func() {
-			err = printResult(&results, flags)
+			err = printResult(results, flags)
 		})
 
 		if err != nil {
@@ -110,7 +110,7 @@ func TestPrintResultDispatchesFormat(t *testing.T) {
 		_, flags := newTestCmd(t)
 		flags.Format = "yaml"
 
-		err := printResult(&results, flags)
+		err := printResult(results, flags)
 
 		if err == nil {
 			t.Error("expected error for invalid format, got nil")
@@ -175,7 +175,7 @@ func TestPrintResultAsText(t *testing.T) {
 			flags.Header = tt.header
 
 			output := captureStdout(t, func() {
-				printResultAsText(&tt.results, flags)
+				printResultAsText(tt.results, flags)
 			})
 
 			lines := strings.Split(strings.TrimSpace(output), "\n")
@@ -202,7 +202,7 @@ func TestPrintResultAsTable(t *testing.T) {
 	}
 
 	output := captureStdout(t, func() {
-		printResultAsTable(&results, flags)
+		printResultAsTable(results, flags)
 	})
 
 	lines := strings.Split(strings.TrimSpace(output), "\n")
@@ -240,7 +240,7 @@ func TestPrintResultAsTableAlwaysHasHeader(t *testing.T) {
 	}
 
 	output := captureStdout(t, func() {
-		printResultAsTable(&results, flags)
+		printResultAsTable(results, flags)
 	})
 
 	if !strings.Contains(output, "Provider") {
@@ -263,8 +263,8 @@ func TestPrintResultAsJson(t *testing.T) {
 				{Ip: "5.6.7.8", Provider: ""},
 			},
 			expected: []map[string]string{
-				{"IP": "1.2.3.4", "Provider": "aws"},
-				{"IP": "5.6.7.8", "Provider": "unknown"},
+				{"ip": "1.2.3.4", "provider": "aws", "error": ""},
+				{"ip": "5.6.7.8", "provider": "unknown", "error": ""},
 			},
 		},
 		{
@@ -275,9 +275,18 @@ func TestPrintResultAsJson(t *testing.T) {
 				{Ip: "3.3.3.3", Provider: common.Azure},
 			},
 			expected: []map[string]string{
-				{"IP": "1.1.1.1", "Provider": "aws"},
-				{"IP": "2.2.2.2", "Provider": "gcp"},
-				{"IP": "3.3.3.3", "Provider": "azure"},
+				{"ip": "1.1.1.1", "provider": "aws", "error": ""},
+				{"ip": "2.2.2.2", "provider": "gcp", "error": ""},
+				{"ip": "3.3.3.3", "provider": "azure", "error": ""},
+			},
+		},
+		{
+			name: "error result",
+			results: []common.Result{
+				{Ip: "bad-ip", Error: fmt.Errorf("error parsing IP: bad-ip")},
+			},
+			expected: []map[string]string{
+				{"ip": "bad-ip", "provider": "error", "error": "error parsing IP: bad-ip"},
 			},
 		},
 	}
@@ -285,7 +294,7 @@ func TestPrintResultAsJson(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output := captureStdout(t, func() {
-				printResultAsJson(&tt.results)
+				printResultAsJson(tt.results)
 			})
 
 			var parsed []map[string]string
@@ -298,7 +307,7 @@ func TestPrintResultAsJson(t *testing.T) {
 			}
 
 			for i, want := range tt.expected {
-				if parsed[i]["IP"] != want["IP"] || parsed[i]["Provider"] != want["Provider"] {
+				if parsed[i]["ip"] != want["ip"] || parsed[i]["provider"] != want["provider"] || parsed[i]["error"] != want["error"] {
 					t.Errorf("item %d: expected %v, got %v", i, want, parsed[i])
 				}
 			}

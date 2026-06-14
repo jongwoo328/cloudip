@@ -26,7 +26,13 @@ var headers = map[string]string{
 	"Provider": "Provider",
 }
 
-func printResult(results *[]common.Result, flags *common.CloudIpFlag) error {
+type jsonResult struct {
+	IP       string `json:"ip"`
+	Provider string `json:"provider"`
+	Error    string `json:"error"`
+}
+
+func printResult(results []common.Result, flags *common.CloudIpFlag) error {
 	switch flags.Format {
 	case "text":
 		printResultAsText(results, flags)
@@ -40,15 +46,15 @@ func printResult(results *[]common.Result, flags *common.CloudIpFlag) error {
 	return nil
 }
 
-func printResultAsText(results *[]common.Result, flags *common.CloudIpFlag) {
+func printResultAsText(results []common.Result, flags *common.CloudIpFlag) {
 	if flags.Header {
 		fmt.Printf("%s%s%s\n", headers["IP"], flags.Delimiter, headers["Provider"])
 	}
-	for _, r := range *results {
+	for _, r := range results {
 		fmt.Printf("%s%s%s\n", r.Ip, flags.Delimiter, getProviderString(r))
 	}
 }
-func printResultAsTable(results *[]common.Result, flags *common.CloudIpFlag) {
+func printResultAsTable(results []common.Result, flags *common.CloudIpFlag) {
 	table := tablewriter.NewTable(os.Stdout,
 		tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
 			Borders:  tw.Border{Left: tw.Off, Right: tw.Off, Top: tw.Off, Bottom: tw.Off},
@@ -62,20 +68,21 @@ func printResultAsTable(results *[]common.Result, flags *common.CloudIpFlag) {
 	)
 
 	table.Header(headers["IP"], headers["Provider"])
-	for _, r := range *results {
+	for _, r := range results {
 		table.Append(r.Ip, getProviderString(r))
 	}
 	table.Render()
 }
 
-func printResultAsJson(results *[]common.Result) error {
-	resultSlice := make([]map[string]string, 0)
-	for _, r := range *results {
-		resultMap := map[string]string{
-			headers["IP"]:       r.Ip,
-			headers["Provider"]: getProviderString(r),
+func printResultAsJson(results []common.Result) error {
+	resultSlice := make([]jsonResult, 0, len(results))
+	for _, r := range results {
+		result := jsonResult{
+			IP:       r.Ip,
+			Provider: getJSONProviderString(r),
+			Error:    getErrorString(r),
 		}
-		resultSlice = append(resultSlice, resultMap)
+		resultSlice = append(resultSlice, result)
 	}
 	bytes, err := json.Marshal(resultSlice)
 	if err != nil {
@@ -83,4 +90,18 @@ func printResultAsJson(results *[]common.Result) error {
 	}
 	fmt.Println(string(bytes))
 	return nil
+}
+
+func getJSONProviderString(r common.Result) string {
+	if r.Error != nil {
+		return "error"
+	}
+	return getProviderString(r)
+}
+
+func getErrorString(r common.Result) string {
+	if r.Error == nil {
+		return ""
+	}
+	return r.Error.Error()
 }
