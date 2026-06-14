@@ -73,7 +73,7 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
   ```
   Output:
   ```text
-  0.10.1
+  0.11.0
   ```
 
 - Single IP Check
@@ -214,7 +214,7 @@ If one or more IP checks fail, `cloudip` still prints all result rows and exits 
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
-   go build -trimpath -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.10.1'
+   go build -trimpath -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.11.0'
    ```
 3. The binary `cloudip` will be generated in the `build/` directory.
 
