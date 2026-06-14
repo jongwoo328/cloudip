@@ -3,6 +3,7 @@ package provider
 import (
 	"cloudip/common"
 	"cloudip/util"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -100,10 +101,22 @@ func (bp *BaseProvider) Initialize() error {
 }
 
 func (bp *BaseProvider) AddIPv4Range(cidr string) error {
+	if bp == nil {
+		return errors.New("provider is not initialized")
+	}
+	if bp.v4Tree == nil {
+		return fmt.Errorf("provider %s is not initialized", bp.name)
+	}
 	return bp.v4Tree.AddCIDR(cidr)
 }
 
 func (bp *BaseProvider) AddIPv6Range(cidr string) error {
+	if bp == nil {
+		return errors.New("provider is not initialized")
+	}
+	if bp.v6Tree == nil {
+		return fmt.Errorf("provider %s is not initialized", bp.name)
+	}
 	return bp.v6Tree.AddCIDR(cidr)
 }
 

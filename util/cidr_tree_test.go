@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -74,14 +75,26 @@ func captureStdout(t *testing.T, fn func()) string {
 	os.Stdout = w
 	defer func() { os.Stdout = origStdout }()
 
-	done := make(chan captureResult)
+	var closeOnce sync.Once
+	var closeErr error
+	closeWriter := func() {
+		closeOnce.Do(func() {
+			closeErr = w.Close()
+		})
+	}
+	defer closeWriter()
+
+	done := make(chan captureResult, 1)
 	go func() {
 		out, err := io.ReadAll(r)
 		done <- captureResult{output: string(out), err: err}
 	}()
 
 	fn()
-	w.Close()
+	closeWriter()
+	if closeErr != nil {
+		t.Fatalf("failed to close captured stdout: %v", closeErr)
+	}
 
 	result := <-done
 	if result.err != nil {
