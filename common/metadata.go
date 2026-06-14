@@ -10,6 +10,10 @@ import (
 )
 
 func (m *MetadataManager) Ensure() error {
+	if m == nil || m.Metadata == nil {
+		return errors.New("metadata is not initialized")
+	}
+
 	if !util.IsFileExists(m.MetadataFilePath) {
 		VerboseOutput(fmt.Sprintf("Creating %s ...", m.ProviderDir))
 		if err := os.MkdirAll(m.ProviderDir, 0755); err != nil {

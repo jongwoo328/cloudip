@@ -133,9 +133,9 @@ func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 	}
 
 	if !util.IsFileExists(ipDataManagerAzure.DataFilePath) {
-		common.VerboseOutput("Azure IP ranged file not exists.")
+		common.VerboseOutput("Azure IP ranges file does not exist.")
 		if ipDataManagerAzure.UpdatePolicy.NoUpdate {
-			return errors.New("Azure IP ranges file not exists and --no-update is enabled")
+			return errors.New("Azure IP ranges file does not exist and --no-update is enabled")
 		}
 		err := ipDataManagerAzure.downloadData()
 		return err
@@ -157,14 +157,14 @@ func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 		return nil
 	}
 	if expired {
-		common.VerboseOutput("Azure IP ranged are outdated. Updating to the latest version...")
+		common.VerboseOutput("Azure IP ranges are outdated. Updating to the latest version...")
 		err := ipDataManagerAzure.downloadData()
 		return err
 	}
 	if err := metadataManager.MarkChecked(time.Now()); err != nil {
 		return util.ErrorWithInfo(err, "error writing metadata")
 	}
-	common.VerboseOutput("Azure IP ranged are up-to-date.")
+	common.VerboseOutput("Azure IP ranges are up-to-date.")
 
 	return nil
 }

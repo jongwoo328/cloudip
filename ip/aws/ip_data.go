@@ -118,9 +118,9 @@ func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 	}
 
 	if !util.IsFileExists(ipDataManagerAws.DataFilePath) {
-		common.VerboseOutput("AWS IP ranges file not exists.")
+		common.VerboseOutput("AWS IP ranges file does not exist.")
 		if ipDataManagerAws.UpdatePolicy.NoUpdate {
-			return errors.New("AWS IP ranges file not exists and --no-update is enabled")
+			return errors.New("AWS IP ranges file does not exist and --no-update is enabled")
 		}
 		// Download the AWS IP ranges file
 		err := ipDataManagerAws.downloadData()
