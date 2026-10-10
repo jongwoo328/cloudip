@@ -33,9 +33,10 @@ func (c *IPChecker) SetUpdatePolicy(policy common.UpdatePolicy) {
 
 func (c *IPChecker) Check(ips []string) []common.Result {
 	results := make([]common.Result, len(ips))
+	initializationErrors := make(map[common.CloudProvider]error)
 
 	for index, ip := range ips {
-		provider, err := c.checkCloudIp(ip)
+		provider, err := c.checkCloudIp(ip, initializationErrors)
 		results[index] = common.Result{
 			Ip:       ip,
 			Provider: provider,
@@ -46,7 +47,7 @@ func (c *IPChecker) Check(ips []string) []common.Result {
 	return results
 }
 
-func (c *IPChecker) checkCloudIp(ip string) (common.CloudProvider, error) {
+func (c *IPChecker) checkCloudIp(ip string, initializationErrors map[common.CloudProvider]error) (common.CloudProvider, error) {
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
 		return "", fmt.Errorf("error parsing IP: %s", ip)
@@ -59,7 +60,14 @@ func (c *IPChecker) checkCloudIp(ip string) (common.CloudProvider, error) {
 			continue
 		}
 
-		err := p.Initialize()
+		// A failed provider is retried on the next Check call, not for every IP.
+		err := initializationErrors[providerType]
+		if err == nil {
+			err = p.Initialize()
+			if err != nil {
+				initializationErrors[providerType] = err
+			}
+		}
 		if err != nil {
 			providerErr = errors.Join(providerErr, fmt.Errorf("%s initialize: %w", providerType, err))
 			continue

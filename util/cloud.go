@@ -11,6 +11,8 @@ import (
 )
 
 var downloadClient = &http.Client{
+	// Bound the entire download, including a response body that stops arriving.
+	Timeout: 30 * time.Second,
 	Transport: &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   5 * time.Second,
