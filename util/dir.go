@@ -25,25 +25,28 @@ func GetAppDir(appName string) string {
 	return ""
 }
 
-func EnsureAppDir(appName string) {
+func EnsureAppDir(appName string) error {
 	appDir := GetAppDir(appName)
-	ensureDir(appDir)
+	return ensureDir(appDir)
 }
 
-func ensureDir(path string) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.MkdirAll(path, 0755)
-		if err != nil {
-			PrintErrorTrace(err)
-			os.Exit(1)
-		}
+func ensureDir(path string) error {
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return fmt.Errorf("cannot create application directory %q: %w", path, err)
 	}
+	return nil
 }
 
-func IsFileExists(path string) bool {
+func IsFileExists(path string) (bool, error) {
 	info, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		return false // Not exist
+		return false, nil
 	}
-	return !info.IsDir() // Exist and not a directory
+	if err != nil {
+		return false, fmt.Errorf("cannot stat file %q: %w", path, err)
+	}
+	if info.IsDir() {
+		return false, fmt.Errorf("expected a file at %q, found a directory", path)
+	}
+	return true, nil
 }

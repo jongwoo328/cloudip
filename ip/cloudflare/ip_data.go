@@ -109,7 +109,15 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(m.DataFilePathV4) || !util.IsFileExists(m.DataFilePathV6) {
+	v4Exists, err := util.IsFileExists(m.DataFilePathV4)
+	if err != nil {
+		return err
+	}
+	v6Exists, err := util.IsFileExists(m.DataFilePathV6)
+	if err != nil {
+		return err
+	}
+	if !v4Exists || !v6Exists {
 		common.VerboseOutput("Cloudflare IP ranges file does not exist.")
 		if m.UpdatePolicy.NoUpdate {
 			return errors.New("Cloudflare IP ranges file does not exist and --no-update is enabled")

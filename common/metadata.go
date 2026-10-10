@@ -14,7 +14,11 @@ func (m *MetadataManager) Ensure() error {
 		return errors.New("metadata is not initialized")
 	}
 
-	if !util.IsFileExists(m.MetadataFilePath) {
+	exists, err := util.IsFileExists(m.MetadataFilePath)
+	if err != nil {
+		return err
+	}
+	if !exists {
 		VerboseOutput(fmt.Sprintf("Creating %s ...", m.ProviderDir))
 		if err := os.MkdirAll(m.ProviderDir, 0755); err != nil {
 			return util.ErrorWithInfo(err, "error creating provider directory")

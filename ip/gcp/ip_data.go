@@ -105,7 +105,11 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(ipDataManagerGcp.DataFilePath) {
+	exists, err := util.IsFileExists(ipDataManagerGcp.DataFilePath)
+	if err != nil {
+		return err
+	}
+	if !exists {
 		common.VerboseOutput("GCP IP ranges file does not exist.")
 		if ipDataManagerGcp.UpdatePolicy.NoUpdate {
 			return errors.New("GCP IP ranges file does not exist and --no-update is enabled")
