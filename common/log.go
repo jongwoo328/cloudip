@@ -1,6 +1,9 @@
 package common
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 var verbose bool
 
@@ -10,6 +13,6 @@ func SetVerbose(v bool) {
 
 func VerboseOutput(msg string) {
 	if verbose {
-		fmt.Println(msg)
+		fmt.Fprintln(os.Stderr, msg)
 	}
 }
