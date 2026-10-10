@@ -2,6 +2,7 @@ package cloudflare
 
 import (
 	"cloudip/common"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -53,20 +54,12 @@ func TestCloudflareDownloadDataWritesCIDRsAndSignature(t *testing.T) {
 		t.Fatalf("request count = %d, want 1", requestCount)
 	}
 
-	v4Content, err := os.ReadFile(manager.DataFilePathV4)
+	content, err := os.ReadFile(manager.snapshotPath())
 	if err != nil {
-		t.Fatalf("ReadFile(v4) error = %v", err)
+		t.Fatal(err)
 	}
-	if string(v4Content) != "173.245.48.0/20\n" {
-		t.Fatalf("v4 content = %q, want %q", string(v4Content), "173.245.48.0/20\n")
-	}
-
-	v6Content, err := os.ReadFile(manager.DataFilePathV6)
-	if err != nil {
-		t.Fatalf("ReadFile(v6) error = %v", err)
-	}
-	if string(v6Content) != "2400:cb00::/32\n" {
-		t.Fatalf("v6 content = %q, want %q", string(v6Content), "2400:cb00::/32\n")
+	if !strings.Contains(string(content), "173.245.48.0/20") || !strings.Contains(string(content), "2400:cb00::/32") {
+		t.Fatalf("snapshot missing address families: %s", content)
 	}
 
 	if metadataManager.Metadata.Signature != "cf-etag" {
@@ -120,10 +113,10 @@ func TestCloudflareEnsureDataFileReusesFetchedDataForUpdate(t *testing.T) {
 		DataFilePathV4: filepath.Join(dir, "cloudflare-v4.txt"),
 		DataFilePathV6: filepath.Join(dir, "cloudflare-v6.txt"),
 	}
-	if err := writeCIDRLines(manager.DataFilePathV4, []string{"old-v4"}); err != nil {
+	if err := writeCIDRLines(manager.DataFilePathV4, []string{"10.0.0.0/8"}); err != nil {
 		t.Fatalf("writeCIDRLines(v4) error = %v", err)
 	}
-	if err := writeCIDRLines(manager.DataFilePathV6, []string{"old-v6"}); err != nil {
+	if err := writeCIDRLines(manager.DataFilePathV6, []string{"2001:db8::/32"}); err != nil {
 		t.Fatalf("writeCIDRLines(v6) error = %v", err)
 	}
 
@@ -135,6 +128,13 @@ func TestCloudflareEnsureDataFileReusesFetchedDataForUpdate(t *testing.T) {
 	}
 	if metadataManager.Metadata.Signature != "new-etag" {
 		t.Fatalf("metadata signature = %q, want %q", metadataManager.Metadata.Signature, "new-etag")
+	}
+	data, err := manager.LoadIpData()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data.V4CIDRs) != 1 || data.V4CIDRs[0] != "173.245.48.0/20" || len(data.V6CIDRs) != 1 || data.V6CIDRs[0] != "2400:cb00::/32" {
+		t.Fatalf("legacy cache was not replaced by a complete snapshot: %+v", data)
 	}
 }
 
@@ -189,10 +189,10 @@ func TestCloudflareEnsureDataFileSkipsFreshUpdateCheck(t *testing.T) {
 
 	v4Path := filepath.Join(dir, "cloudflare-v4.txt")
 	v6Path := filepath.Join(dir, "cloudflare-v6.txt")
-	if err := writeCIDRLines(v4Path, []string{"old-v4"}); err != nil {
+	if err := writeCIDRLines(v4Path, []string{"10.0.0.0/8"}); err != nil {
 		t.Fatalf("writeCIDRLines(v4) error = %v", err)
 	}
-	if err := writeCIDRLines(v6Path, []string{"old-v6"}); err != nil {
+	if err := writeCIDRLines(v6Path, []string{"2001:db8::/32"}); err != nil {
 		t.Fatalf("writeCIDRLines(v6) error = %v", err)
 	}
 
@@ -258,5 +258,57 @@ func TestCloudflareEnsureDataFileNoUpdateRequiresExistingFiles(t *testing.T) {
 	}
 	if requestCount != 0 {
 		t.Fatalf("request count = %d, want 0", requestCount)
+	}
+}
+
+func writeCIDRLines(path string, cidrs []string) error {
+	return os.WriteFile(path, []byte(strings.Join(cidrs, "\n")+"\n"), 0644)
+}
+
+func TestCloudflareSnapshotAndLegacyCachesWorkOffline(t *testing.T) {
+	for _, snapshot := range []bool{false, true} {
+		for _, noUpdate := range []bool{false, true} {
+			t.Run(fmt.Sprintf("snapshot=%t/no-update=%t", snapshot, noUpdate), func(t *testing.T) {
+				requestCount := 0
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					requestCount++
+					w.WriteHeader(http.StatusServiceUnavailable)
+				}))
+				defer server.Close()
+				dir := t.TempDir()
+				original := metadataManager
+				metadataManager = &common.MetadataManager{MetadataFilePath: filepath.Join(dir, ".metadata.json"), ProviderDir: dir, Metadata: &common.CloudMetadata{Type: common.Cloudflare}}
+				t.Cleanup(func() { metadataManager = original })
+				if err := metadataManager.Write(&common.CloudMetadata{Type: common.Cloudflare, Signature: "cached", LastChecked: time.Now().Unix()}); err != nil {
+					t.Fatal(err)
+				}
+				manager := &IpDataManagerCloudflare{DataURI: server.URL, DataFilePathV4: filepath.Join(dir, "v4.txt"), DataFilePathV6: filepath.Join(dir, "v6.txt"), UpdatePolicy: common.UpdatePolicy{NoUpdate: noUpdate}}
+				if snapshot {
+					if err := os.WriteFile(manager.snapshotPath(), []byte(`{"ipv4_cidrs":["10.0.0.0/8"],"ipv6_cidrs":["2001:db8::/32"]}`), 0644); err != nil {
+						t.Fatal(err)
+					}
+				} else {
+					if err := writeCIDRLines(manager.DataFilePathV4, []string{"10.0.0.0/8"}); err != nil {
+						t.Fatal(err)
+					}
+					if err := writeCIDRLines(manager.DataFilePathV6, []string{"2001:db8::/32"}); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if err := manager.EnsureDataFile(); err != nil {
+					t.Fatal(err)
+				}
+				if requestCount != 0 {
+					t.Fatalf("offline cache made %d requests", requestCount)
+				}
+				data, err := manager.LoadIpData()
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(data.V4CIDRs) != 1 || len(data.V6CIDRs) != 1 {
+					t.Fatalf("missing cached address family: %+v", data)
+				}
+			})
+		}
 	}
 }
