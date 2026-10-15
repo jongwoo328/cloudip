@@ -68,6 +68,15 @@ func (m *mockProvider) GetName() string {
 	return m.name
 }
 
+type updatePolicyMockProvider struct {
+	mockProvider
+	policy common.UpdatePolicy
+}
+
+func (m *updatePolicyMockProvider) SetUpdatePolicy(policy common.UpdatePolicy) {
+	m.policy = policy
+}
+
 func TestCheckerCheck(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -160,7 +169,7 @@ func TestCheckerCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			checker := NewIPChecker(tt.mockProviders, DefaultProviderOrder)
-			results := checker.Check([]string{tt.ip})
+			results := checker.Check([]string{tt.ip}, common.DefaultUpdatePolicy())
 
 			if len(results) != 1 {
 				t.Fatalf("Expected 1 result, got %d", len(results))
@@ -220,7 +229,7 @@ func TestCheck(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := checker.Check(tt.ips)
+			results := checker.Check(tt.ips, common.DefaultUpdatePolicy())
 
 			if len(results) != tt.expectedLen {
 				t.Errorf("Expected %d results, got %d", tt.expectedLen, len(results))
@@ -248,7 +257,7 @@ func TestCheckWithProviderOrder(t *testing.T) {
 	)
 
 	ips := []string{"192.168.1.1"}
-	results := checker.Check(ips)
+	results := checker.Check(ips, common.DefaultUpdatePolicy())
 
 	if len(results) != 1 {
 		t.Fatalf("Expected 1 result, got %d", len(results))
@@ -257,5 +266,27 @@ func TestCheckWithProviderOrder(t *testing.T) {
 	// Should only match AWS (first in provider order)
 	if results[0].Provider != common.AWS {
 		t.Errorf("Expected AWS, got %q", results[0].Provider)
+	}
+}
+
+func TestCheckAppliesUpdatePolicyAtCheckTime(t *testing.T) {
+	mockProvider := &updatePolicyMockProvider{
+		mockProvider: *newMockProvider("AWS", false, false, false),
+	}
+	checker := NewIPChecker(
+		map[common.CloudProvider]provider.CloudProvider{
+			common.AWS: mockProvider,
+		},
+		DefaultProviderOrder,
+	)
+
+	policy := common.UpdatePolicy{
+		NoUpdate: true,
+		TTL:      common.DefaultUpdateCheckTTL,
+	}
+	checker.Check([]string{"8.8.8.8"}, policy)
+
+	if mockProvider.policy != policy {
+		t.Fatalf("policy = %+v, want %+v", mockProvider.policy, policy)
 	}
 }
