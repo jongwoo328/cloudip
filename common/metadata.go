@@ -47,13 +47,7 @@ func (m *MetadataManager) Read() error {
 }
 
 func (m *MetadataManager) Write(metadata *CloudMetadata) error {
-	metadataFile, err := os.OpenFile(m.MetadataFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return util.ErrorWithInfo(err, "error opening metadata file")
-	}
-	defer metadataFile.Close()
-
-	err = util.WriteJSON(metadataFile, metadata)
+	err := util.WriteJSONFile(m.MetadataFilePath, metadata)
 	if err != nil {
 		return util.ErrorWithInfo(err, "error writing metadata")
 	}

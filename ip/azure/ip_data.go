@@ -89,7 +89,8 @@ func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 		return err
 	}
 
-	headers, err := util.DownloadFromUrlToFileWithHeaders(ipDataManagerAzure.DataURI, ipDataManagerAzure.DataFilePath)
+	data := IpRangeDataAzure{}
+	headers, err := util.DownloadJSONFromUrl(ipDataManagerAzure.DataURI, &data)
 	if err != nil {
 		return err
 	}
@@ -101,6 +102,13 @@ func (ipDataManagerAzure *IpDataManagerAzure) downloadData() error {
 		return err
 	}
 	signature := common.LastModifiedSignature(currentLastModified)
+
+	if err := data.validate(); err != nil {
+		return err
+	}
+	if err := util.WriteJSONFile(ipDataManagerAzure.DataFilePath, &data); err != nil {
+		return err
+	}
 
 	signatureExpired := metadataManager.IsSignatureExpired(signature)
 	metadata := common.CloudMetadata{
@@ -153,16 +161,15 @@ func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 
 	expired, err := ipDataManagerAzure.isExpired()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting last modified time from Microsoft server"))
-		return nil
+		return ipDataManagerAzure.useCacheIfUpdateFails(err)
 	}
 	if expired {
 		common.VerboseOutput("Azure IP ranges are outdated. Updating to the latest version...")
 		err := ipDataManagerAzure.downloadData()
-		return err
+		return ipDataManagerAzure.useCacheIfUpdateFails(err)
 	}
 	if err := metadataManager.MarkChecked(time.Now()); err != nil {
-		return util.ErrorWithInfo(err, "error writing metadata")
+		return ipDataManagerAzure.useCacheIfUpdateFails(util.ErrorWithInfo(err, "error writing metadata"))
 	}
 	common.VerboseOutput("Azure IP ranges are up-to-date.")
 
@@ -186,6 +193,9 @@ func (ipDataManagerAzure *IpDataManagerAzure) LoadIpData() (*IpRangeDataAzure, e
 		return nil, util.ErrorWithInfo(err, "error reading data file")
 	}
 
+	if err := azureIpRangeData.validate(); err != nil {
+		return nil, err
+	}
 	ipDataManagerAzure.IpRange = azureIpRangeData
 	return &ipDataManagerAzure.IpRange, nil
 }
@@ -194,4 +204,15 @@ var ipDataManagerAzure = &IpDataManagerAzure{
 	DataFile:     DataFile,
 	DataFilePath: DataFilePathAzure,
 	IpRange:      IpRangeDataAzure{},
+}
+
+func (m *IpDataManagerAzure) useCacheIfUpdateFails(updateErr error) error {
+	if updateErr == nil {
+		return nil
+	}
+	if _, err := m.LoadIpData(); err != nil {
+		return errors.Join(updateErr, err)
+	}
+	util.PrintErrorTrace(util.ErrorWithInfo(updateErr, "using cached Azure IP ranges"))
+	return nil
 }
