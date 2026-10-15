@@ -46,7 +46,7 @@ func TestCheckCloudIP_UsesParsedProviderPath(t *testing.T) {
 		DefaultProviderOrder,
 	)
 
-	got, err := checker.checkCloudIp("192.168.1.1")
+	got, err := checker.checkCloudIp("192.168.1.1", make(map[common.CloudProvider]error))
 	if err != nil {
 		t.Fatalf("checkCloudIp returned unexpected error: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestCheckCloudIP_InvalidIPShortCircuitsBeforeProviders(t *testing.T) {
 		DefaultProviderOrder,
 	)
 
-	_, err := checker.checkCloudIp("not-an-ip")
+	_, err := checker.checkCloudIp("not-an-ip", make(map[common.CloudProvider]error))
 	if err == nil {
 		t.Fatal("expected invalid IP to return an error")
 	}
