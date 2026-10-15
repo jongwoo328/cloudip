@@ -21,8 +21,8 @@ type IpDataManagerCloudflare struct {
 }
 
 type IpRangeDataCloudflare struct {
-	V4CIDRs []string
-	V6CIDRs []string
+	V4CIDRs []string `json:"ipv4_cidrs"`
+	V6CIDRs []string `json:"ipv6_cidrs"`
 }
 
 type ipListResponseCloudflare struct {
@@ -57,10 +57,7 @@ func (m *IpDataManagerCloudflare) fetchData() (*ipListResponseCloudflare, error)
 	if err != nil {
 		return nil, err
 	}
-	if !data.Success {
-		return nil, errors.New("Cloudflare IP API returned unsuccessful response")
-	}
-	if _, err := data.signature(); err != nil {
+	if err := data.validate(); err != nil {
 		return nil, err
 	}
 	return &data, nil
@@ -72,10 +69,11 @@ func (m *IpDataManagerCloudflare) writeData(data *ipListResponseCloudflare) erro
 		return err
 	}
 
-	if err := writeCIDRLines(m.DataFilePathV4, data.Result.V4CIDRs); err != nil {
+	if err := data.validate(); err != nil {
 		return err
 	}
-	if err := writeCIDRLines(m.DataFilePathV6, data.Result.V6CIDRs); err != nil {
+	ranges := IpRangeDataCloudflare{V4CIDRs: data.Result.V4CIDRs, V6CIDRs: data.Result.V6CIDRs}
+	if err := util.WriteJSONFile(m.snapshotPath(), &ranges); err != nil {
 		return err
 	}
 
@@ -105,11 +103,29 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 	if err := metadataManager.Ensure(); err != nil {
 		return err
 	}
+	snapshotExists, err := m.hasSnapshot()
+	if err != nil {
+		return err
+	}
+	if snapshotExists {
+		if err := metadataManager.Read(); err != nil {
+			return err
+		}
+		return m.checkForUpdate()
+	}
 	if err := metadataManager.Read(); err != nil {
 		return err
 	}
 
-	if !util.IsFileExists(m.DataFilePathV4) || !util.IsFileExists(m.DataFilePathV6) {
+	v4Exists, err := util.IsFileExists(m.DataFilePathV4)
+	if err != nil {
+		return err
+	}
+	v6Exists, err := util.IsFileExists(m.DataFilePathV6)
+	if err != nil {
+		return err
+	}
+	if !v4Exists || !v6Exists {
 		common.VerboseOutput("Cloudflare IP ranges file does not exist.")
 		if m.UpdatePolicy.NoUpdate {
 			return errors.New("Cloudflare IP ranges file does not exist and --no-update is enabled")
@@ -117,6 +133,10 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 		return m.downloadData()
 	}
 
+	return m.checkForUpdate()
+}
+
+func (m *IpDataManagerCloudflare) checkForUpdate() error {
 	policy := m.UpdatePolicy
 	if policy.NoUpdate {
 		common.VerboseOutput("Cloudflare IP ranges update check skipped.")
@@ -129,8 +149,7 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 
 	data, err := m.fetchData()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from Cloudflare"))
-		return nil
+		return m.useCacheIfUpdateFails(err)
 	}
 	signature, err := data.signature()
 	if err != nil {
@@ -138,10 +157,10 @@ func (m *IpDataManagerCloudflare) EnsureDataFile() error {
 	}
 	if metadataManager.IsSignatureExpired(signature) {
 		common.VerboseOutput("Cloudflare IP ranges are outdated. Updating to the latest version...")
-		return m.writeData(data)
+		return m.useCacheIfUpdateFails(m.writeData(data))
 	}
 	if err := metadataManager.MarkChecked(time.Now()); err != nil {
-		return util.ErrorWithInfo(err, "error writing metadata")
+		return m.useCacheIfUpdateFails(util.ErrorWithInfo(err, "error writing metadata"))
 	}
 	common.VerboseOutput("Cloudflare IP ranges are up-to-date.")
 
@@ -153,21 +172,11 @@ func (m *IpDataManagerCloudflare) LoadIpData() (*IpRangeDataCloudflare, error) {
 		return &m.IpRange, nil
 	}
 
-	v4CIDRs, err := readCIDRLines(m.DataFilePathV4)
+	data, err := m.readDataFile()
 	if err != nil {
 		return nil, err
 	}
-	v6CIDRs, err := readCIDRLines(m.DataFilePathV6)
-	if err != nil {
-		return nil, err
-	}
-
-	data := IpRangeDataCloudflare{
-		V4CIDRs: v4CIDRs,
-		V6CIDRs: v6CIDRs,
-	}
-
-	m.IpRange = data
+	m.IpRange = *data
 	return &m.IpRange, nil
 }
 
@@ -195,23 +204,6 @@ func readCIDRLines(path string) ([]string, error) {
 	return cidrs, nil
 }
 
-func writeCIDRLines(path string, cidrs []string) error {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-	if err != nil {
-		err = util.ErrorWithInfo(err, "error opening data file")
-		util.PrintErrorTrace(err)
-		return err
-	}
-	defer file.Close()
-
-	if _, err := file.WriteString(strings.Join(cidrs, "\n") + "\n"); err != nil {
-		err = util.ErrorWithInfo(err, "error writing data file")
-		util.PrintErrorTrace(err)
-		return err
-	}
-	return nil
-}
-
 func (data *ipListResponseCloudflare) signature() (string, error) {
 	if data.Result.Etag == "" {
 		return "", errors.New("cannot get etag")
@@ -226,4 +218,15 @@ var ipDataManagerCloudflare = &IpDataManagerCloudflare{
 	DataFilePathV4: DataFilePathCloudflareV4,
 	DataFilePathV6: DataFilePathCloudflareV6,
 	IpRange:        IpRangeDataCloudflare{},
+}
+
+func (m *IpDataManagerCloudflare) useCacheIfUpdateFails(updateErr error) error {
+	if updateErr == nil {
+		return nil
+	}
+	if _, err := m.LoadIpData(); err != nil {
+		return errors.Join(updateErr, err)
+	}
+	util.PrintErrorTrace(util.ErrorWithInfo(updateErr, "using cached Cloudflare IP ranges"))
+	return nil
 }

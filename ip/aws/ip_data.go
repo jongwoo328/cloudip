@@ -61,7 +61,8 @@ func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
 		return errors.New("cannot get DataURI")
 	}
 
-	headers, err := util.DownloadFromUrlToFileWithHeaders(ipDataManagerAws.DataURI, ipDataManagerAws.DataFilePath)
+	data := IpRangeDataAws{}
+	headers, err := util.DownloadJSONFromUrl(ipDataManagerAws.DataURI, &data)
 	if err != nil {
 		return err
 	}
@@ -69,6 +70,13 @@ func (ipDataManagerAws *IpDataManagerAws) downloadData() error {
 	signature, currentLastModified, err := awsSignatureFromHeaders(headers)
 	if err != nil {
 		util.PrintErrorTrace(err)
+		return err
+	}
+
+	if err := data.validate(); err != nil {
+		return err
+	}
+	if err := util.WriteJSONFile(ipDataManagerAws.DataFilePath, &data); err != nil {
 		return err
 	}
 
@@ -117,7 +125,11 @@ func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(ipDataManagerAws.DataFilePath) {
+	exists, err := util.IsFileExists(ipDataManagerAws.DataFilePath)
+	if err != nil {
+		return err
+	}
+	if !exists {
 		common.VerboseOutput("AWS IP ranges file does not exist.")
 		if ipDataManagerAws.UpdatePolicy.NoUpdate {
 			return errors.New("AWS IP ranges file does not exist and --no-update is enabled")
@@ -139,17 +151,16 @@ func (ipDataManagerAws *IpDataManagerAws) EnsureDataFile() error {
 
 	expired, err := ipDataManagerAws.isExpired()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from AWS server"))
-		return nil
+		return ipDataManagerAws.useCacheIfUpdateFails(err)
 	}
 	if expired {
 		common.VerboseOutput("AWS IP ranges are outdated. Updating to the latest version...")
 		// update the file
 		err := ipDataManagerAws.downloadData()
-		return err
+		return ipDataManagerAws.useCacheIfUpdateFails(err)
 	}
 	if err := metadataManager.MarkChecked(time.Now()); err != nil {
-		return util.ErrorWithInfo(err, "error writing metadata")
+		return ipDataManagerAws.useCacheIfUpdateFails(util.ErrorWithInfo(err, "error writing metadata"))
 	}
 	common.VerboseOutput("AWS IP ranges are up-to-date.")
 
@@ -173,6 +184,9 @@ func (ipDataManagerAws *IpDataManagerAws) LoadIpData() (*IpRangeDataAws, error) 
 		return nil, util.ErrorWithInfo(err, "error reading data file")
 	}
 
+	if err := awsIpRangeData.validate(); err != nil {
+		return nil, err
+	}
 	ipDataManagerAws.IpRange = awsIpRangeData
 	return &ipDataManagerAws.IpRange, nil
 }
@@ -182,4 +196,15 @@ var ipDataManagerAws = &IpDataManagerAws{
 	DataFile:     DataFile,
 	DataFilePath: DataFilePathAws,
 	IpRange:      IpRangeDataAws{},
+}
+
+func (m *IpDataManagerAws) useCacheIfUpdateFails(updateErr error) error {
+	if updateErr == nil {
+		return nil
+	}
+	if _, err := m.LoadIpData(); err != nil {
+		return errors.Join(updateErr, err)
+	}
+	util.PrintErrorTrace(util.ErrorWithInfo(updateErr, "using cached AWS IP ranges"))
+	return nil
 }

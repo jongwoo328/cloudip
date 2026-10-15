@@ -19,7 +19,7 @@ func TestGCPEnsureDataFileReusesFetchedDataForUpdate(t *testing.T) {
 		_, _ = w.Write([]byte(`{
 			"syncToken": "new-sync-token",
 			"creationTime": "2026-04-23T13:05:31.195904",
-			"prefixes": []
+			"prefixes": [{"ipv4Prefix":"10.0.0.0/8"}]
 		}`))
 	}))
 	defer server.Close()
@@ -42,7 +42,7 @@ func TestGCPEnsureDataFileReusesFetchedDataForUpdate(t *testing.T) {
 		DataURI:      server.URL,
 		DataFilePath: filepath.Join(dir, "gcp.json"),
 	}
-	if err := manager.writeData(&IpRangeDataGcp{SyncToken: "old-sync-token"}); err != nil {
+	if err := os.WriteFile(manager.DataFilePath, []byte(`{"syncToken":"old-sync-token","prefixes":[{"ipv4Prefix":"10.0.0.0/8"}]}`), 0644); err != nil {
 		t.Fatalf("writeData() error = %v", err)
 	}
 	if err := metadataManager.Write(&common.CloudMetadata{
@@ -84,7 +84,7 @@ func TestGCPEnsureDataFileSkipsFreshUpdateCheck(t *testing.T) {
 		_, _ = w.Write([]byte(`{
 			"syncToken": "new-sync-token",
 			"creationTime": "2026-04-23T13:05:31.195904",
-			"prefixes": []
+			"prefixes": [{"ipv4Prefix":"10.0.0.0/8"}]
 		}`))
 	}))
 	defer server.Close()
@@ -111,7 +111,7 @@ func TestGCPEnsureDataFileSkipsFreshUpdateCheck(t *testing.T) {
 	}
 
 	dataPath := filepath.Join(dir, "gcp.json")
-	if err := os.WriteFile(dataPath, []byte(`{"syncToken":"old-sync-token","prefixes":[]}`), 0644); err != nil {
+	if err := os.WriteFile(dataPath, []byte(`{"syncToken":"old-sync-token","prefixes":[{"ipv4Prefix":"10.0.0.0/8"}]}`), 0644); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
 
@@ -136,7 +136,7 @@ func TestGCPEnsureDataFileNoUpdateRequiresExistingFile(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestCount++
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"syncToken":"sync-token","prefixes":[]}`))
+		_, _ = w.Write([]byte(`{"syncToken":"sync-token","prefixes":[{"ipv4Prefix":"10.0.0.0/8"}]}`))
 	}))
 	defer server.Close()
 

@@ -53,25 +53,17 @@ func (ipDataManagerGcp *IpDataManagerGcp) fetchData() (*IpRangeDataGcp, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := gcpIpRangeData.validate(); err != nil {
+		return nil, err
+	}
 	return &gcpIpRangeData, nil
 }
 
 func (ipDataManagerGcp *IpDataManagerGcp) writeData(gcpIpRangeData *IpRangeDataGcp) error {
-	if gcpIpRangeData.SyncToken == "" {
-		return errors.New("cannot get syncToken")
-	}
-
-	ipDataFile, err := os.OpenFile(ipDataManagerGcp.DataFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-	if err != nil {
-		err = util.ErrorWithInfo(err, "error opening data file")
-		util.PrintErrorTrace(err)
+	if err := gcpIpRangeData.validate(); err != nil {
 		return err
 	}
-	defer ipDataFile.Close()
-
-	if err := util.WriteJSON(ipDataFile, gcpIpRangeData); err != nil {
-		err = util.ErrorWithInfo(err, "error writing data file")
-		util.PrintErrorTrace(err)
+	if err := util.WriteJSONFile(ipDataManagerGcp.DataFilePath, gcpIpRangeData); err != nil {
 		return err
 	}
 
@@ -105,7 +97,11 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(ipDataManagerGcp.DataFilePath) {
+	exists, err := util.IsFileExists(ipDataManagerGcp.DataFilePath)
+	if err != nil {
+		return err
+	}
+	if !exists {
 		common.VerboseOutput("GCP IP ranges file does not exist.")
 		if ipDataManagerGcp.UpdatePolicy.NoUpdate {
 			return errors.New("GCP IP ranges file does not exist and --no-update is enabled")
@@ -126,18 +122,14 @@ func (ipDataManagerGcp *IpDataManagerGcp) EnsureDataFile() error {
 
 	gcpIpRangeData, err := ipDataManagerGcp.fetchData()
 	if err != nil {
-		util.PrintErrorTrace(util.ErrorWithInfo(err, "error getting signature from GCP server"))
-		return nil
-	}
-	if gcpIpRangeData.SyncToken == "" {
-		return errors.New("cannot get syncToken")
+		return ipDataManagerGcp.useCacheIfUpdateFails(err)
 	}
 	if metadataManager.IsSignatureExpired(gcpIpRangeData.SyncToken) {
 		common.VerboseOutput("GCP IP ranges are outdated. Updating to the latest version...")
-		return ipDataManagerGcp.writeData(gcpIpRangeData)
+		return ipDataManagerGcp.useCacheIfUpdateFails(ipDataManagerGcp.writeData(gcpIpRangeData))
 	}
 	if err := metadataManager.MarkChecked(time.Now()); err != nil {
-		return util.ErrorWithInfo(err, "error writing metadata")
+		return ipDataManagerGcp.useCacheIfUpdateFails(util.ErrorWithInfo(err, "error writing metadata"))
 	}
 	common.VerboseOutput("GCP IP ranges are up-to-date.")
 
@@ -154,6 +146,9 @@ func (ipDataManagerGcp *IpDataManagerGcp) LoadIpData() (*IpRangeDataGcp, error) 
 		return nil, err
 	}
 
+	if err := gcpIpRangeData.validate(); err != nil {
+		return nil, err
+	}
 	ipDataManagerGcp.IpRange = *gcpIpRangeData
 	return &ipDataManagerGcp.IpRange, nil
 }
@@ -179,4 +174,15 @@ var ipDataManagerGcp = &IpDataManagerGcp{
 	DataFile:     DataFile,
 	DataFilePath: DataFilePathGcp,
 	IpRange:      IpRangeDataGcp{},
+}
+
+func (m *IpDataManagerGcp) useCacheIfUpdateFails(updateErr error) error {
+	if updateErr == nil {
+		return nil
+	}
+	if _, err := m.LoadIpData(); err != nil {
+		return errors.Join(updateErr, err)
+	}
+	util.PrintErrorTrace(util.ErrorWithInfo(updateErr, "using cached GCP IP ranges"))
+	return nil
 }

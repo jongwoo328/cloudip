@@ -1,7 +1,6 @@
 package util
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -11,6 +10,8 @@ import (
 )
 
 var downloadClient = &http.Client{
+	// Bound the entire download, including a response body that stops arriving.
+	Timeout: 30 * time.Second,
 	Transport: &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   5 * time.Second,
@@ -40,15 +41,10 @@ func DownloadFromUrlToFileWithHeaders(url string, filePath string) (http.Header,
 		return nil, err
 	}
 
-	dataFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
-	if err != nil {
-		err = ErrorWithInfo(err, "error opening data file")
-		PrintErrorTrace(err)
-		return nil, err
-	}
-	defer dataFile.Close()
-
-	_, err = io.Copy(dataFile, resp.Body)
+	err = WriteFileAtomically(filePath, func(file *os.File) error {
+		_, err := io.Copy(file, resp.Body)
+		return err
+	})
 	if err != nil {
 		err = ErrorWithInfo(err, "error saving data file")
 		PrintErrorTrace(err)
@@ -72,7 +68,7 @@ func DownloadJSONFromUrl[T any](url string, data *T) (http.Header, error) {
 		return nil, err
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(data); err != nil {
+	if err := DecodeJSON(resp.Body, data); err != nil {
 		err = ErrorWithInfo(err, "error decoding JSON data")
 		PrintErrorTrace(err)
 		return nil, err

@@ -13,9 +13,19 @@ var Version string
 
 func NewRootCmd(flags *common.CloudIpFlag, checker *ip.IPChecker) *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:           common.AppName,
-		Short:         fmt.Sprintf("%s is a CLI tool for identifying whether an IP address belongs to a major cloud provider (e.g., AWS, GCP).", common.AppName),
-		Args:          cobra.ArbitraryArgs,
+		Use:   common.AppName + " IP [IP...]",
+		Short: fmt.Sprintf("%s is a CLI tool for identifying whether an IP address belongs to a major cloud provider (e.g., AWS, GCP).", common.AppName),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+				return fmt.Errorf("%w\nUsage: %s", err, cmd.UseLine())
+			}
+			switch flags.Format {
+			case "text", "table", "json":
+				return nil
+			default:
+				return fmt.Errorf("invalid output format: %s. Supported formats are: text, table, json", flags.Format)
+			}
+		},
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
