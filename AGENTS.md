@@ -8,7 +8,7 @@
 
 ## Architecture
 
-- **Provider initialization**: Providers have no `init()` — all setup (metadata, data loading, CIDR tree) happens lazily via `Initialize()`. Metadata is prepared in `EnsureDataFile()`, data loading in `loadFunc`. `checkCloudIp()` calls `Initialize()` before each IP check, which guarantees setup. New providers must follow this pattern.
+- **Provider initialization**: Providers have no `init()` — all setup (metadata, data loading, CIDR tree) happens lazily via `Initialize()`. Metadata is prepared in `EnsureDataFile()`, data loading in `loadFunc`. `checkCloudIp()` calls `Initialize()` before checking a provider, unless that provider already failed initialization within the same `Check()` call. Failed initialization is remembered for the rest of that batch and retried on the next `Check()` call; healthy providers are still checked. Successful initialization remains cached for the provider lifetime. New providers must follow this pattern.
 
 ## Tasks
 

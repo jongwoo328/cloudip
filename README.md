@@ -20,6 +20,8 @@ This project is currently under development, and features and options may change
     - [Custom Delimiters](#custom-delimiters)
     - [Output Formats](#output-formats)
   - [Other Options](#other-options)
+  - [Downloads and Cache Behavior](#downloads-and-cache-behavior)
+  - [Error Handling](#error-handling)
 - [Build from Source](#build-from-source)
 - [License](#license)
 
@@ -67,6 +69,9 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
 ## Usage
 
 ### Basic Usage
+
+IP lookups require at least one IP argument: `cloudip IP [IP...]`. Use `--help` or `version` without an IP.
+
 - Version Check
   ```shell
   cloudip version
@@ -182,15 +187,18 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
 
 ### Other Options
 - Verbose Output
-  You can use the `--verbose`, `-v` option to display detailed information.
+  The `--verbose`, `-v` option writes diagnostic logs to stderr and lookup results to stdout. With `--format=json --verbose`, stdout remains valid JSON.
   ```shell
   cloudip --verbose 54.230.176.25
   ```
-  Output:
+  Example stderr (varies with cache state):
   ```text
-  AWS IP ranges file not exists.
+  AWS IP ranges file does not exist.
   Downloading AWS IP ranges...
   AWS IP ranges updated [2024-12-27 04:12:30]
+  ```
+  stdout:
+  ```text
   54.230.176.25 aws
   ```
 
@@ -201,8 +209,19 @@ Download the latest binary from the [Releases](https://github.com/jongwoo328/clo
   ```
   If the required local provider data file is missing, `--no-update` returns an error instead of downloading it.
 
+### Downloads and Cache Behavior
+Each data download request has a 30-second timeout, including reading the response body. This is not a timeout for the entire command; multiple providers or requests can take longer overall.
+
+If an update download or data validation fails, a valid existing cache can still be used, with diagnostics written to stderr. Failed downloads and invalid data do not overwrite the existing cache. If no usable cache is available, initialization of that provider fails.
+
+When checking multiple IPs in one batch, a provider that fails initialization is not initialized again in that batch. Other healthy providers are still checked, and a subsequent invocation retries the failed provider.
+
 ### Error Handling
-If one or more IP checks fail, `cloudip` still prints all result rows and exits with a non-zero status code. In `text` and `table` formats, failed rows show `ERROR` in the provider column and detailed error messages are written to stderr. In `json` format, each row includes an `error` field.
+Missing IP arguments or an unsupported `--format` value (including an empty value) cause an error before provider initialization or lookup, without printing result rows. Missing IP arguments also produce a usage hint.
+
+Cache permission errors, invalid paths, and directories where files are expected are reported as file access errors. If the application storage directory cannot be created, the command writes diagnostics to stderr and exits with a non-zero status code.
+
+After argument validation succeeds, if one or more IP checks fail, `cloudip` still prints all result rows and exits with a non-zero status code. In `text` and `table` formats, failed rows show `ERROR` in the provider column and detailed error messages are written to stderr. In `json` format, each row includes an `error` field.
 
 
 ---
