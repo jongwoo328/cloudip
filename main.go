@@ -14,7 +14,10 @@ import (
 )
 
 func main() {
-	util.EnsureAppDir(common.AppName)
+	if err := util.EnsureAppDir(common.AppName); err != nil {
+		util.PrintErrorTrace(err)
+		os.Exit(1)
+	}
 
 	flags := &common.CloudIpFlag{}
 	checker := ip.NewIPChecker(

@@ -140,7 +140,11 @@ func (ipDataManagerAzure *IpDataManagerAzure) EnsureDataFile() error {
 		return err
 	}
 
-	if !util.IsFileExists(ipDataManagerAzure.DataFilePath) {
+	exists, err := util.IsFileExists(ipDataManagerAzure.DataFilePath)
+	if err != nil {
+		return err
+	}
+	if !exists {
 		common.VerboseOutput("Azure IP ranges file does not exist.")
 		if ipDataManagerAzure.UpdatePolicy.NoUpdate {
 			return errors.New("Azure IP ranges file does not exist and --no-update is enabled")
