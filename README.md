@@ -78,7 +78,7 @@ IP lookups require at least one IP argument: `cloudip IP [IP...]`. Use `--help` 
   ```
   Output:
   ```text
-  0.11.0
+  0.11.1
   ```
 
 - Single IP Check
@@ -233,7 +233,7 @@ After argument validation succeeds, if one or more IP checks fail, `cloudip` sti
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
-   go build -trimpath -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.11.0'
+   go build -trimpath -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.11.1'
    ```
 3. The binary `cloudip` will be generated in the `build/` directory.
 

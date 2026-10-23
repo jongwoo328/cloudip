@@ -77,7 +77,7 @@ IP 조회에는 최소 하나의 IP 인자가 필요합니다: `cloudip IP [IP..
   ```
   출력:
   ```text
-  0.11.0
+  0.11.1
   ```
 
 - 단일 IP 확인 (Single IP Check)
@@ -229,7 +229,7 @@ IP 인자가 없거나 `--format`이 `text`, `table`, `json` 이외의 값(빈 �
    git clone https://github.com/jongwoo328/cloudip.git
    cd cloudip
    go mod tidy
-   go build -trimpath -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.11.0'
+   go build -trimpath -o build/cloudip --ldflags '-X cloudip/cmd.Version=0.11.1'
    ```
 3. 바이너리 `cloudip`가 `build/` 디렉토리에 생성됩니다.
 
