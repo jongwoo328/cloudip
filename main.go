@@ -9,6 +9,7 @@ import (
 	"cloudip/ip/cloudflare"
 	"cloudip/ip/gcp"
 	"cloudip/ip/provider"
+	"cloudip/ip/vultr"
 	"cloudip/util"
 	"os"
 )
@@ -26,6 +27,7 @@ func main() {
 			common.GCP:        gcp.Provider,
 			common.Azure:      azure.Provider,
 			common.Cloudflare: cloudflare.Provider,
+			common.Vultr:      vultr.Provider,
 		},
 		ip.DefaultProviderOrder,
 	)

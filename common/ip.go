@@ -11,6 +11,7 @@ const (
 	GCP        CloudProvider = "gcp"
 	Azure      CloudProvider = "azure"
 	Cloudflare CloudProvider = "cloudflare"
+	Vultr      CloudProvider = "vultr"
 )
 
 type CloudProvider string

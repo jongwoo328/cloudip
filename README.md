@@ -37,6 +37,7 @@ This project is currently under development, and features and options may change
 - **GCP**: Google Cloud Platform
 - **Azure**: Microsoft Azure
 - **Cloudflare**: Cloudflare, Inc.
+- **Vultr**: The Constant Company
 
 ## Installation
 ### Homebrew (macOS only)

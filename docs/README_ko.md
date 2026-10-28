@@ -37,6 +37,7 @@
 - GCP (Google Cloud Platform)
 - Azure (Microsoft Azure)
 - Cloudflare (Cloudflare, Inc.)
+- Vultr (The Constant Company)
 
 ## 설치
 ### Homebrew (macOS 전용)
