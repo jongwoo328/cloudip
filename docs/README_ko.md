@@ -37,6 +37,7 @@
 - GCP (Google Cloud Platform)
 - Azure (Microsoft Azure)
 - Cloudflare (Cloudflare, Inc.)
+- DigitalOcean (DigitalOcean, LLC)
 
 ## 설치
 ### Homebrew (macOS 전용)
