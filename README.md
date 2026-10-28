@@ -37,6 +37,7 @@ This project is currently under development, and features and options may change
 - **GCP**: Google Cloud Platform
 - **Azure**: Microsoft Azure
 - **Cloudflare**: Cloudflare, Inc.
+- **OCI**: Oracle Cloud Infrastructure
 
 ## Installation
 ### Homebrew (macOS only)

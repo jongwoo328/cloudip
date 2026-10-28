@@ -37,6 +37,7 @@
 - GCP (Google Cloud Platform)
 - Azure (Microsoft Azure)
 - Cloudflare (Cloudflare, Inc.)
+- OCI (Oracle Cloud Infrastructure)
 
 ## 설치
 ### Homebrew (macOS 전용)
