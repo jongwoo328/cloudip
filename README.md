@@ -217,6 +217,8 @@ Each data download request has a 30-second timeout, including reading the respon
 
 If an update download or data validation fails, a valid existing cache can still be used, with diagnostics written to stderr. Failed downloads and invalid data do not overwrite the existing cache. If no usable cache is available, initialization of that provider fails.
 
+JSON downloads and caches use case-sensitive field matching. Duplicate object names, invalid UTF-8, and trailing JSON data are rejected. Existing valid caches remain readable.
+
 When checking multiple IPs in one batch, a provider that fails initialization is not initialized again in that batch. Other healthy providers are still checked, and a subsequent invocation retries the failed provider.
 
 ### Error Handling
@@ -230,7 +232,7 @@ After argument validation succeeds, if one or more IP checks fail, `cloudip` sti
 ---
 
 ## Build from Source
-1. Ensure that Go is installed (Go v1.25 or later is needed).
+1. Ensure that Go is installed (Go v1.27.3 or later is needed).
 2. Clone and build the project:
    ```shell
    git clone https://github.com/jongwoo328/cloudip.git

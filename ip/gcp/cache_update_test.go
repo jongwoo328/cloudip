@@ -22,6 +22,8 @@ func TestGcpUpdateRejectsBadDataWithoutLosingCache(t *testing.T) {
 		{"missing schema", "{}", false},
 		{"empty ranges", `{"syncToken":"new","prefixes":[]}`, false},
 		{"invalid CIDR", strings.ReplaceAll(valid, "10.0.0.0/8", "bad-cidr"), false},
+		{"duplicate JSON names", strings.TrimSuffix(valid, "}") + `,"ignored":1,"ignored":2}`, false},
+		{"invalid UTF-8", strings.TrimSuffix(valid, "}") + ",\"ignored\":\"\xff\"}", false},
 		{"trailing JSON", valid + " {}", false},
 		{"truncated response", valid, true},
 	} {

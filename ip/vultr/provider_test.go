@@ -171,6 +171,8 @@ func TestVultrUpdateFailuresPreserveCache(t *testing.T) {
 		{"empty ranges", `{"updated":"new","subnets":[]}`, 200, false},
 		{"invalid IPv4", strings.ReplaceAll(updatedData, "10.0.0.0/8", "bad"), 200, false},
 		{"invalid IPv6", strings.ReplaceAll(updatedData, "2001:db8::/126", "bad"), 200, false},
+		{"duplicate JSON names", strings.TrimSuffix(updatedData, "}") + `,"ignored":1,"ignored":2}`, 200, false},
+		{"invalid UTF-8", strings.TrimSuffix(updatedData, "}") + ",\"ignored\":\"\xff\"}", 200, false},
 		{"trailing JSON", updatedData + ` {}`, 200, false},
 		{"HTTP failure", "unavailable", 503, false},
 		{"truncated response", updatedData, 200, true},

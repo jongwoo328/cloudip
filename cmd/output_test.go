@@ -318,3 +318,41 @@ func TestPrintResultAsJson(t *testing.T) {
 		})
 	}
 }
+
+func TestPrintResultAsJSONPreservesLegacyEncoding(t *testing.T) {
+	badInput := "bad\xff<&>\u2028\u2029"
+	for _, tc := range []struct {
+		name    string
+		results []common.Result
+		want    []jsonResult
+	}{
+		{"empty", nil, []jsonResult{}},
+		{"mixed results", []common.Result{
+			{Ip: "192.0.2.1", Provider: common.AWS},
+			{Ip: "192.0.2.2"},
+			{Ip: "bad", Error: fmt.Errorf("invalid IP")},
+		}, []jsonResult{
+			{IP: "192.0.2.1", Provider: "aws"},
+			{IP: "192.0.2.2", Provider: "unknown"},
+			{IP: "bad", Provider: "error", Error: "invalid IP"},
+		}},
+		{"escaped invalid argument", []common.Result{{Ip: badInput, Error: fmt.Errorf("invalid IP: %s", badInput)}},
+			[]jsonResult{{IP: badInput, Provider: "error", Error: "invalid IP: " + badInput}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Keep the old API as a consumer/format compatibility check.
+			want, err := json.Marshal(tc.want)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var output bytes.Buffer
+			if err := printResultAsJson(&output, tc.results); err != nil {
+				t.Fatal(err)
+			}
+			want = append(want, '\n')
+			if !bytes.Equal(output.Bytes(), want) {
+				t.Fatalf("JSON format changed:\ngot  %q\nwant %q", output.Bytes(), want)
+			}
+		})
+	}
+}

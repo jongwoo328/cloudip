@@ -21,7 +21,7 @@ type CloudProvider string
 type CloudMetadata struct {
 	Type        CloudProvider `json:"type"`
 	Signature   string        `json:"signature"`
-	LastChecked int64         `json:"lastChecked,omitempty"`
+	LastChecked int64         `json:"lastChecked,omitzero"`
 }
 
 type MetadataManager struct {

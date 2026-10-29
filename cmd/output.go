@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"cloudip/common"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 
@@ -91,7 +92,12 @@ func printResultAsJson(w io.Writer, results []common.Result) error {
 		}
 		resultSlice = append(resultSlice, result)
 	}
-	bytes, err := json.Marshal(resultSlice)
+	bytes, err := json.Marshal(resultSlice,
+		jsontext.EscapeForHTML(true),
+		jsontext.EscapeForJS(true),
+		// Invalid IP arguments can contain arbitrary bytes; keep error output printable.
+		jsontext.AllowInvalidUTF8(true),
+	)
 	if err != nil {
 		return fmt.Errorf("error converting result to JSON: %w", err)
 	}
