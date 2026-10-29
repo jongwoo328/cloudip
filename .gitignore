@@ -124,3 +124,4 @@ build/
 .gocache/
 
 .claude/
+.kata.local.toml
