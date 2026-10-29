@@ -11,7 +11,7 @@ func TestCheckBoundsInitializationFailuresAndRetriesNextCall(t *testing.T) {
 	failure := errors.New("network unavailable")
 	p := &parsedPathMockProvider{name: "AWS", initErr: failure}
 	checker := NewIPChecker(map[common.CloudProvider]provider.CloudProvider{common.AWS: p}, []common.CloudProvider{common.AWS})
-	results := checker.Check([]string{"bad-ip", "1.2.3.4", "1.2.3.5", "1.2.3.6"})
+	results := checker.Check([]string{"bad-ip", "1.2.3.4", "1.2.3.5", "1.2.3.6"}, common.DefaultUpdatePolicy())
 	if p.initializeCalls != 1 || p.checkParsedCalls != 0 {
 		t.Fatalf("init=%d check=%d", p.initializeCalls, p.checkParsedCalls)
 	}
@@ -22,7 +22,7 @@ func TestCheckBoundsInitializationFailuresAndRetriesNextCall(t *testing.T) {
 	}
 	p.initErr = nil
 	p.parsedMatch = true
-	results = checker.Check([]string{"1.2.3.4"})
+	results = checker.Check([]string{"1.2.3.4"}, common.DefaultUpdatePolicy())
 	if p.initializeCalls != 2 || results[0].Error != nil || results[0].Provider != common.AWS {
 		t.Fatalf("next call did not recover: calls=%d results=%+v", p.initializeCalls, results)
 	}
@@ -32,7 +32,7 @@ func TestCheckContinuesWithHealthyProviderAfterInitializationFailure(t *testing.
 	failed := &parsedPathMockProvider{name: "AWS", initErr: errors.New("unavailable")}
 	healthy := &parsedPathMockProvider{name: "GCP", parsedMatch: true}
 	checker := NewIPChecker(map[common.CloudProvider]provider.CloudProvider{common.AWS: failed, common.GCP: healthy}, []common.CloudProvider{common.AWS, common.GCP})
-	results := checker.Check([]string{"1.2.3.4", "1.2.3.5"})
+	results := checker.Check([]string{"1.2.3.4", "1.2.3.5"}, common.DefaultUpdatePolicy())
 	if failed.initializeCalls != 1 {
 		t.Fatalf("failed provider initialized %d times", failed.initializeCalls)
 	}
