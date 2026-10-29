@@ -19,7 +19,7 @@ func TestDownloadTimeoutIncludesStalledResponseBody(t *testing.T) {
 	client.Timeout = 100 * time.Millisecond
 	downloadClient = &client
 	t.Cleanup(func() { downloadClient = original })
-	for _, kind := range []string{"file", "JSON"} {
+	for _, kind := range []string{"file", "JSON", "bytes"} {
 		t.Run(kind, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
@@ -35,6 +35,8 @@ func TestDownloadTimeoutIncludesStalledResponseBody(t *testing.T) {
 			var err error
 			if kind == "file" {
 				_, err = DownloadFromUrlToFileWithHeaders(server.URL, filepath.Join(t.TempDir(), "data.json"))
+			} else if kind == "bytes" {
+				_, err = DownloadFromUrl(server.URL)
 			} else {
 				var data map[string]any
 				_, err = DownloadJSONFromUrl(server.URL, &data)

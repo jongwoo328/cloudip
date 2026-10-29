@@ -39,6 +39,7 @@ This project is currently under development, and features and options may change
 - **Cloudflare**: Cloudflare, Inc.
 - **OCI**: Oracle Cloud Infrastructure
 - **Vultr**: The Constant Company
+- **DigitalOcean**: DigitalOcean, LLC
 
 ## Installation
 ### Homebrew (macOS only)

@@ -39,6 +39,7 @@
 - Cloudflare (Cloudflare, Inc.)
 - OCI (Oracle Cloud Infrastructure)
 - Vultr (The Constant Company)
+- DigitalOcean (DigitalOcean, LLC)
 
 ## 설치
 ### Homebrew (macOS 전용)

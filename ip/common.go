@@ -11,4 +11,5 @@ var DefaultProviderOrder = []common.CloudProvider{
 	common.Cloudflare,
 	common.OCI,
 	common.Vultr,
+	common.DigitalOcean,
 }
