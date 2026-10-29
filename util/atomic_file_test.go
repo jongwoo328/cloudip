@@ -41,15 +41,24 @@ func TestAtomicFilePreservesOriginalOnFailedWrite(t *testing.T) {
 }
 
 func TestAtomicJSONPreservesOriginalOnEncodingError(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "data.json")
-	if err := os.WriteFile(path, []byte("original"), 0644); err != nil {
-		t.Fatal(err)
+	for _, tc := range []struct {
+		name string
+		data any
+	}{
+		{"unsupported type", map[string]any{"unsupported": make(chan int)}},
+		{"invalid UTF-8", map[string]string{"value": "\xff"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "data.json")
+			if err := os.WriteFile(path, []byte("original"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			if err := WriteJSONFile(path, &tc.data); err == nil {
+				t.Fatal("expected encoding error")
+			}
+			assertCacheContent(t, path, "original")
+		})
 	}
-	invalid := map[string]any{"unsupported": make(chan int)}
-	if err := WriteJSONFile(path, &invalid); err == nil {
-		t.Fatal("expected encoding error")
-	}
-	assertCacheContent(t, path, "original")
 }
 
 func TestAtomicFileCleansUpOnRenameFailure(t *testing.T) {
