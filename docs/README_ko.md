@@ -37,6 +37,7 @@
 - GCP (Google Cloud Platform)
 - Azure (Microsoft Azure)
 - Cloudflare (Cloudflare, Inc.)
+- OCI (Oracle Cloud Infrastructure)
 - Vultr (The Constant Company)
 
 ## 설치

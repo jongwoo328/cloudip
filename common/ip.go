@@ -11,6 +11,7 @@ const (
 	GCP        CloudProvider = "gcp"
 	Azure      CloudProvider = "azure"
 	Cloudflare CloudProvider = "cloudflare"
+	OCI        CloudProvider = "oci"
 	Vultr      CloudProvider = "vultr"
 )
 
