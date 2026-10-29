@@ -38,6 +38,7 @@ This project is currently under development, and features and options may change
 - **Azure**: Microsoft Azure
 - **Cloudflare**: Cloudflare, Inc.
 - **OCI**: Oracle Cloud Infrastructure
+- **Vultr**: The Constant Company
 
 ## Installation
 ### Homebrew (macOS only)

@@ -10,4 +10,5 @@ var DefaultProviderOrder = []common.CloudProvider{
 	common.Azure,
 	common.Cloudflare,
 	common.OCI,
+	common.Vultr,
 }
